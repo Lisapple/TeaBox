@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title></title>
+<link rel="stylesheet" type="text/css" href="../style/index.css"/>
+
+<style>
+
+span.pre {
+	font-family:Consolas, monospace;
+	margin-left:20px;
+	padding:0px 2px;
+	background-color:#dfd;
+	border-radius:3px;
+}
+
+</style>
+
+</head>
+<body style="margin:0;font-family:helvetica;background-color:#ececec;">
+
+<div style="padding:8px;">
+	<a class="home" href="#">Home</a>
+</div>
+
+<div class="gray">
+	<a name="text_file_format"></a>
+	<h3>Text File Format</h3>
+</div>
+
+<div class="white">
+
+The <i>Notes</i> file dragged into a project can be formatted with this syntax to provide extra information for the project.
+<br><br>
+
+&#149; <u>Headers</u>:
+<br>
+<span class="pre">###Nice Header</span>
+will looks like:
+<b style="font-size:1.17em">Nice Header</b>
+<br><br>
+
+<span class="pre">##Nice and Big Header</span>
+will looks like:
+<b style="font-size:1.5em">Nice and Big Header</b>
+<br><br>
+
+<span class="pre">#Bigger Header Ever</span>
+will looks like:
+<b style="font-size:2em">Bigger Header Ever</b>
+<br><br>
+
+&#149; <u>Font Format</u>:
+<br>
+<span class="pre">*bold is bold*</span>
+will looks like:
+<b>bold is bold</b>
+<br><br>
+
+<span class="pre">_something better in italic_</span>
+will looks like:
+<i>something better in italic</i>
+<br><br>
+
+<span class="pre">~~something to stroke through~~</span>
+will looks like:
+<span style="text-decoration:line-through;">something to stroke through</span>
+<br><br>
+
+&#149; <u>Web links</u>:
+<br>
+<span class="pre">@lisacintosh.com</span>
+will looks like:
+<a href="http://lisacintosh.com" style="color:#555;">lisacintosh.com</a>
+<br><br>
+
+&#149; <u>Checkboxes</u>:
+<br>
+<span class="pre">- [ ] Must be done</span>
+will looks like:
+<img style="vertical-align:top;position:relative;top:-2px;" src="../gfx/checkbox.png"> Must be done
+<br><br>
+
+<span class="pre">- [x] It's done</span>
+will looks like:
+<img style="vertical-align:top;position:relative;top:-2px;" src="../gfx/checkbox-checked.png"> <span style="color:#555;text-decoration:line-through;">It's done!</span>
+<br><br>
+
+&#149; <u>Countdowns</u>:
+<br><br>
+<span class="pre">{ 8/10 } Need to done 2 times more</span>
+will looks like:
+<img style="vertical-align:top;position:relative;top:-18px;" src="../gfx/countdown-8-10.png"> Need to done 2 times more
+<br>
+
+&#149; <u>Step Links</u>:
+<br>
+<span class="pre">Look this step: [Step name]</span>
+will looks like:
+Look this step: <a href="#" style="color:#555;">Step name</a>
+<br>
+	
+<br>
+</div>
+<br>
+
+<div id="footer">
+<a class="ext-link" href="http://www.lisacintosh.com/">Lis@cintosh</a>
+</div>
+
+</body>
+</html>
