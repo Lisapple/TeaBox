@@ -59,24 +59,6 @@
 
 - (void)reloadData
 {
-#warning @TODO: Remove this part
-#if 0
-	BonjourBrowser * browser = [AppDelegate app].browser;
-	NSArray * services = [browser services];
-	NSMutableArray * hostNames = [[NSMutableArray alloc] initWithCapacity:3];
-	NSMutableArray * sharedProjects = [[NSMutableArray alloc] initWithCapacity:3];
-	for (BonjourService * service in services) {
-		NSArray * projects = [service projects];
-		if (projects) {
-			[hostNames addObject:[NSString stringWithFormat:@"%@'s Projects", service.hostName]];
-			[sharedProjects addObject:[service projects]];
-		}
-	}
-	sharedHostNames = (NSArray *)hostNames;
-	
-	arrayOfSharedProjects = (NSArray *)sharedProjects;
-#endif
-	
 	NSArray * fetchArrayOfProjects = [self fetchArrayOfProjects];
 	arrayOfProjects = fetchArrayOfProjects;
 	
@@ -135,7 +117,6 @@
 	NSArray * allProjects = [Project allProjectsFromLibrary:[TBLibrary defaultLibrary]];
 	
 	int old_priority = -1;
-	//int priorityCount = 0;
 	NSMutableArray * projects = nil;
 	
 	for (Project * project in allProjects) {
@@ -148,19 +129,6 @@
 			
 			old_priority = priority;
 			[mutablePriorities insertObject:@(priority) atIndex:0];
-			
-			/*
-			int * prioritiesCopy = (int *)malloc((priorityCount + 1) * sizeof(int));
-			if (priorities) {
-				for (int i = 0; i < priorityCount; i++) {
-					prioritiesCopy[i] = priorities[i];
-				}
-				free(priorities);
-			}
-			priorities = prioritiesCopy;
-			priorities[priorityCount] = @(priority);
-			priorityCount++;
-			*/
 		}
 		
 		[projects addObject:project];
@@ -171,86 +139,6 @@
 	}
 	
 	priorities = (NSArray *)mutablePriorities;
-	
-#if 0
-	{
-		NSMutableArray * array = [NSMutableArray arrayWithCapacity:10];
-		
-		sqlite3 * db = [TBLibrary defaultLibrary].database;
-		
-		/* create a statement from an SQL string */
-		sqlite3_stmt * stmt = NULL;
-		const char sql[] = "SELECT name, description, priority, index_path, last_modification_date, Project_id FROM Project ORDER BY priority DESC";
-		int err = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-		if (err != SQLITE_OK)
-			NSLog(@"sqlite3 prepare fails!");
-		
-		int old_priority = -1;
-		NSMutableArray * projects = nil;
-		
-		int priorityCount = 0;
-		/* execute statement and step over each row of the result set */
-		while (sqlite3_step(stmt) == SQLITE_ROW)
-		{
-			const char * filename_ptr = (const char *)sqlite3_column_text(stmt, 0);
-			const char * path_ptr = (const char *)sqlite3_column_text(stmt, 1);
-			int priority = sqlite3_column_int(stmt, 2);
-			
-			Project * project = [[Project alloc] initWithName:[NSString stringWithUTF8String:filename_ptr]
-												  description:[NSString stringWithUTF8String:path_ptr]
-													 priority:priority
-											insertIntoLibrary:nil];
-			
-			const char * index_path_ptr = (const char *)sqlite3_column_text(stmt, 3);
-			if (index_path_ptr)
-				project.indexPath = [NSString stringWithUTF8String:index_path_ptr];
-			
-			const char * last_modification_ptr = (const char *)sqlite3_column_text(stmt, 4);
-			NSDateFormatter * formatter = [[NSDateFormatter alloc] init];
-			formatter.locale = [NSLocale currentLocale];
-			formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
-			formatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];// Set to GMT time zone
-			NSString * dateString = [NSString stringWithUTF8String:last_modification_ptr];
-			project.lastModificationDate = [formatter dateFromString:dateString];
-			[formatter release];
-			
-			project.identifier = sqlite3_column_int(stmt, 5);
-			
-			if (priority != old_priority) {
-				if (projects) {
-					[array addObject:(NSArray *)projects];
-					[projects release];
-				}
-				projects = [[NSMutableArray alloc] initWithCapacity:10];
-				
-				old_priority = priority;
-				
-				int * prioritiesCopy = (int *)malloc((priorityCount + 1) * sizeof(int));
-				if (priorities) {
-					for (int i = 0; i < priorityCount; i++) {
-						prioritiesCopy[i] = priorities[i];
-					}
-					free(priorities);
-				}
-				priorities = prioritiesCopy;
-				priorities[priorityCount] = priority;
-				priorityCount++;
-			}
-			
-			[projects addObject:project];
-			[project release];
-		}
-		
-		if (projects) {
-			[array addObject:(NSArray *)projects];
-			[projects release];
-		}
-		
-		/* destroy and release the statement */
-		sqlite3_finalize(stmt);
-		stmt = NULL;
-	}
-#endif
 	
 	return (NSArray *)array;
 }
@@ -439,22 +327,11 @@
 
 - (void)tableView:(TableView *)tableView didSelectCell:(TableViewCell *)cell atIndexPath:(NSIndexPath *)indexPath
 {
-	if (indexPath.section < sharedHostNames.count) {
-		Project * project = ((NSArray *)arrayOfSharedProjects[indexPath.section])[indexPath.row];
-		NSLog(@"project for section %ld and row %ld: %@", indexPath.section, indexPath.row, project.name);
-		
-		BonjourBrowser * browser = [AppDelegate app].browser;
-		BonjourService * service = (browser.services)[indexPath.section];
-		[service sendUTF8String:[NSString stringWithFormat:@"STEPS %d", project.identifier]];
-		//[service sendUTF8String:[NSString stringWithFormat:@"ALL_ITEMS %d", project.identifier]];
-		
-	} else {
-		NSInteger section = indexPath.section - sharedHostNames.count;
-		Project * project = ((NSArray *)arrayOfProjects[section])[indexPath.row];
-		ProjectViewController * projectViewController = [[NSApp delegate] projectViewController];
-		projectViewController.project = project;
-		[NavigationController pushViewController:projectViewController animated:YES];
-	}
+	NSInteger section = indexPath.section - sharedHostNames.count;
+	Project * project = ((NSArray *)arrayOfProjects[section])[indexPath.row];
+	ProjectViewController * projectViewController = [[NSApp delegate] projectViewController];
+	projectViewController.project = project;
+	[NavigationController pushViewController:projectViewController animated:YES];
 }
 
 - (NSMenu *)rightClickMenuForTableView:(TableView *)tableView forCellAtIndexPath:(NSIndexPath *)indexPath

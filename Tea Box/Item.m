@@ -482,28 +482,6 @@
 				return nil;
 			}
 			
-#if 0
-			/* Bind the description to the statment */
-			int path_bind = sqlite3_bind_parameter_index(stmt, ":path");
-			err = sqlite3_bind_text(stmt, path_bind, [path UTF8String], -1, SQLITE_TRANSIENT);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
-				return nil;
-			}
-#endif
-			
-#if 0
-			if (deviceOrNil) {
-				/* Bind the description to the statment */
-				int device_bind = sqlite3_bind_parameter_index(stmt, ":device");
-				err = sqlite3_bind_text(stmt, device_bind, [deviceOrNil UTF8String], -1, SQLITE_TRANSIENT);
-				if (err != SQLITE_OK) {
-					NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
-					return nil;
-				}
-			}
-#endif
-			
 			/* Bind the type to the statment */
 			int type_bind = sqlite3_bind_parameter_index(stmt, ":type");
 			err = sqlite3_bind_text(stmt, type_bind, [type UTF8String], -1, SQLITE_TRANSIENT);

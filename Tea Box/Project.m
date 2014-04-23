@@ -432,11 +432,4 @@
 	return YES;
 }
 
-/*
-- (NSString *)description
-{
-	return [NSString stringWithFormat:@"<Project: 0x%x name=\"%@\", description=\"%@\" id=%i library=%@>", self, _name, _description, _identifier, _library];
-}
-*/
-
 @end

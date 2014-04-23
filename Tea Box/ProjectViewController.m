@@ -168,13 +168,11 @@
 
 - (BOOL)becomeFirstResponder
 {
-	NSLog(@"ProjectViewController become first responder");
 	return YES;
 }
 
 - (BOOL)resignFirstResponder
 {
-	NSLog(@"ProjectViewController resign first responder");
 	return YES;
 }
 
@@ -472,14 +470,6 @@
 	
 	NSMenuItem * selectItem = [menu itemWithTag:(_project.priority)];
 	selectItem.state = NSOnState;
-	
-	/*
-	 [menu addItem:[NSMenuItem separatorItem]];
-	 
-	 [menu addItemWithTitle:@"Project is not Shared" target:nil action:NULL];
-	 [menu addItemWithTitle:@"Share Project" target:self action:selector];
-	 */
-	
 	[menu popUpMenuPositioningItem:selectItem
 						atLocation:NSMakePoint(_priorityButton.frame.origin.x, -5.)
 							inView:self.view];
@@ -549,19 +539,6 @@
 #if _SANDBOX_SUPPORTED_
 	[fileURL stopAccessingSecurityScopedResource];
 #endif
-	
-#if 0
-	/* A little trick:
-	 - On sandboxing application, -[NSWorkspace activateFileViewerSelectingURLs:] doesn't work with URLs, only with path.
-	 - On non-sandboxing application, the method requierd URLs.
-	 */
-	if ([NSURL instancesRespondToSelector:@selector(startAccessingSecurityScopedResource)]) {// Test if we are on a system that able to run sandbox application by testing -[NSURL startAccessingSecurityScopedResource]
-		[[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:[NSArray arrayWithObject:[NSURL fileURLWithPath:path]]];// [NSArray arrayWithObject:path]
-	} else {
-		NSURL * fileURL = [NSURL fileURLWithPath:path];
-		[[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:[NSArray arrayWithObject:fileURL]];
-	}
-#endif
 }
 
 - (IBAction)copyToPasteboardSelectedItemAction:(id)sender
@@ -594,48 +571,6 @@
 	if (!success) {
 		NSLog(@"Error when adding data to pasteboard");
 	}
-	
-	/*
-	 if ([item.type isEqualToString:kItemTypeImage]) {
-	 
-	 NSImage * image = [[NSImage alloc] initWithContentsOfFile:path];
-	 NSArray * representations = image.representations;
-	 if (representations.count > 0) {
-	 data = [[representations objectAtIndex:0] representationUsingType:NSPNGFileType
-	 properties:nil];
-	 }
-	 [image release];
-	 
-	 type = NSPasteboardTypePNG;
-	 
-	 } else if ([item.type isEqualToString:kItemTypeText]) {
-	 
-	 NSDictionary * attributes = nil;
-	 NSAttributedString * attributedString = [[NSAttributedString alloc] initWithPath:path
-	 documentAttributes:&attributes];
-	 data = [attributedString RTFFromRange:NSMakeRange(0., attributedString.length)
-	 documentAttributes:attributes];
-	 [attributedString release];
-	 
-	 type = NSPasteboardTypeRTF;
-	 
-	 } else if ([item.type isEqualToString:kItemTypeWebURL]) {
-	 
-	 data = [NSData dataWithContentsOfFile:path];
-	 
-	 type = NSPasteboardTypeString;
-	 }
-	 */
-	
-	/*
-	 if (data) {
-	 NSPasteboard * pasteboard = [NSPasteboard generalPasteboard];
-	 BOOL success = [pasteboard setData:data forType:type];
-	 if (!success) {
-	 NSLog(@"Error when adding data to pasteboard");
-	 }
-	 }
-	 */
 }
 
 - (IBAction)exportSelectedItemAction:(id)sender
@@ -1405,13 +1340,6 @@
 - (BOOL)tableView:(TableView *)tableView couldCloseSection:(NSInteger)section
 {
 	return YES;
-	
-	/*
-	 if (showsIndexDescription || _editing)
-	 return (section < 2);
-	 
-	 return (section < 1);
-	 */
 }
 
 #pragma mark - TableView Delegate -

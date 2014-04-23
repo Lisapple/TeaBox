@@ -18,8 +18,6 @@
 		500CD46D1675321100BC5652 /* Icon.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 500CD46C1675321100BC5652 /* Icon.iconset */; };
 		50143FE01636DD950086B8C4 /* SandboxHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 50143FDE1636DD950086B8C4 /* SandboxHelper.m */; };
 		50143FE21636E4C40086B8C4 /* default-database.sqlite3 in Resources */ = {isa = PBXBuildFile; fileRef = 50143FE11636E4C40086B8C4 /* default-database.sqlite3 */; };
-		50158FD7163C5574000730B6 /* BonjourBrowser.m in Sources */ = {isa = PBXBuildFile; fileRef = 50158FD5163C5574000730B6 /* BonjourBrowser.m */; };
-		50158FD8163C5574000730B6 /* BonjourPublisher.m in Sources */ = {isa = PBXBuildFile; fileRef = 50158FD6163C5574000730B6 /* BonjourPublisher.m */; };
 		50158FDF163C5596000730B6 /* NSInputStream+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50158FDD163C5596000730B6 /* NSInputStream+additions.m */; };
 		50158FE0163C5596000730B6 /* NSOutputStream+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50158FDE163C5596000730B6 /* NSOutputStream+additions.m */; };
 		50158FE3163C5F47000730B6 /* JSONKit.m in Sources */ = {isa = PBXBuildFile; fileRef = 50158FE2163C5F47000730B6 /* JSONKit.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -30,9 +28,7 @@
 		503050861621EF08002FBB2B /* TBLibrary.m in Sources */ = {isa = PBXBuildFile; fileRef = 503050851621EF08002FBB2B /* TBLibrary.m */; };
 		50370B9716314E1E00C826F4 /* NavigationBar.m in Sources */ = {isa = PBXBuildFile; fileRef = 50370B9616314E1E00C826F4 /* NavigationBar.m */; };
 		50370B9A16315AF100C826F4 /* navigation-bar-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 50370B9916315AF100C826F4 /* navigation-bar-background.png */; };
-		503F784F163EDCB2003309FD /* BonjourService+SharedHost.m in Sources */ = {isa = PBXBuildFile; fileRef = 503F784E163EDCB2003309FD /* BonjourService+SharedHost.m */; };
 		504EF0631620929800679BA3 /* document-icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 504EF0621620929800679BA3 /* document-icon.icns */; };
-		5055EA2D1656861700E00834 /* FileObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 5055EA2C1656861700E00834 /* FileObserver.m */; };
 		5058874E161CB2C100B44D06 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5058874D161CB2C100B44D06 /* Cocoa.framework */; };
 		50588758161CB2C100B44D06 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 50588756161CB2C100B44D06 /* InfoPlist.strings */; };
 		5058875A161CB2C100B44D06 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 50588759161CB2C100B44D06 /* main.m */; };
@@ -63,7 +59,6 @@
 		50A5928916398B34005570E7 /* NSMenu+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A5928816398B32005570E7 /* NSMenu+additions.m */; };
 		50A84FB616387E260092D85F /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 50A84FB516387E260092D85F /* WebKit.framework */; };
 		50AD992F18FDB567006FACA1 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 50AD992E18FDB567006FACA1 /* index.html */; };
-		50D254E3165144D700A3D458 /* BonjourFileRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 50D254E2165144D700A3D458 /* BonjourFileRequest.m */; };
 		50D87E041673A52100CB4F65 /* NSURL+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50D87E031673A52100CB4F65 /* NSURL+additions.m */; };
 		50DEE67216A99A9900FCE61C /* Tea Box Help in Resources */ = {isa = PBXBuildFile; fileRef = 50DEE67116A99A9900FCE61C /* Tea Box Help */; };
 		50E5E2C61642E810005CEF0D /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 50E5E2C51642E80F005CEF0D /* Quartz.framework */; };
@@ -102,10 +97,6 @@
 		50143FDE1636DD950086B8C4 /* SandboxHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SandboxHelper.m; sourceTree = "<group>"; };
 		50143FDF1636DD950086B8C4 /* SandboxHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SandboxHelper.h; sourceTree = "<group>"; };
 		50143FE11636E4C40086B8C4 /* default-database.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "default-database.sqlite3"; sourceTree = "<group>"; };
-		50158FD3163C5574000730B6 /* BonjourBrowser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BonjourBrowser.h; sourceTree = "<group>"; };
-		50158FD4163C5574000730B6 /* BonjourPublisher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BonjourPublisher.h; sourceTree = "<group>"; };
-		50158FD5163C5574000730B6 /* BonjourBrowser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = BonjourBrowser.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		50158FD6163C5574000730B6 /* BonjourPublisher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = BonjourPublisher.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		50158FDB163C5596000730B6 /* NSInputStream+additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSInputStream+additions.h"; sourceTree = "<group>"; };
 		50158FDC163C5596000730B6 /* NSOutputStream+additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSOutputStream+additions.h"; sourceTree = "<group>"; };
 		50158FDD163C5596000730B6 /* NSInputStream+additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSInputStream+additions.m"; sourceTree = "<group>"; };
@@ -125,11 +116,7 @@
 		50370B9516314E1E00C826F4 /* NavigationBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = NavigationBar.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		50370B9616314E1E00C826F4 /* NavigationBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NavigationBar.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		50370B9916315AF100C826F4 /* navigation-bar-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "navigation-bar-background.png"; sourceTree = "<group>"; };
-		503F784D163EDCB2003309FD /* BonjourService+SharedHost.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "BonjourService+SharedHost.h"; sourceTree = "<group>"; };
-		503F784E163EDCB2003309FD /* BonjourService+SharedHost.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "BonjourService+SharedHost.m"; sourceTree = "<group>"; };
 		504EF0621620929800679BA3 /* document-icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = "document-icon.icns"; sourceTree = "<group>"; };
-		5055EA2B1656861700E00834 /* FileObserver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileObserver.h; sourceTree = "<group>"; };
-		5055EA2C1656861700E00834 /* FileObserver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = FileObserver.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		50588749161CB2C100B44D06 /* Tea Box.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tea Box.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5058874D161CB2C100B44D06 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		50588750161CB2C100B44D06 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -173,8 +160,6 @@
 		50A5928816398B32005570E7 /* NSMenu+additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMenu+additions.m"; sourceTree = "<group>"; };
 		50A84FB516387E260092D85F /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		50AD992E18FDB567006FACA1 /* index.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = index.html; path = Pods/TBIndexParser/index.html; sourceTree = SOURCE_ROOT; };
-		50D254E1165144D700A3D458 /* BonjourFileRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BonjourFileRequest.h; sourceTree = "<group>"; };
-		50D254E2165144D700A3D458 /* BonjourFileRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BonjourFileRequest.m; sourceTree = "<group>"; };
 		50D87E011673980A00CB4F65 /* Tea-Box.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "Tea-Box.entitlements"; path = "Tea Box/Tea-Box.entitlements"; sourceTree = "<group>"; };
 		50D87E021673A52100CB4F65 /* NSURL+additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+additions.h"; sourceTree = "<group>"; };
 		50D87E031673A52100CB4F65 /* NSURL+additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+additions.m"; sourceTree = "<group>"; };
@@ -193,7 +178,6 @@
 		50EABFE2163ADB720091A4C7 /* text-type@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-type@2x.png"; sourceTree = "<group>"; };
 		50EABFE3163ADB720091A4C7 /* url-type.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "url-type.png"; sourceTree = "<group>"; };
 		50EABFE4163ADB720091A4C7 /* url-type@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "url-type@2x.png"; sourceTree = "<group>"; };
-		50F45DA0189702980042202B /* To Do List.rtf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.rtf; name = "To Do List.rtf"; path = "../To Do List.rtf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -212,26 +196,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		50158FDA163C557E000730B6 /* Bonjour - @TODO: Remove */ = {
-			isa = PBXGroup;
-			children = (
-				50D254E1165144D700A3D458 /* BonjourFileRequest.h */,
-				50D254E2165144D700A3D458 /* BonjourFileRequest.m */,
-				503F784D163EDCB2003309FD /* BonjourService+SharedHost.h */,
-				503F784E163EDCB2003309FD /* BonjourService+SharedHost.m */,
-				50158FD3163C5574000730B6 /* BonjourBrowser.h */,
-				50158FD5163C5574000730B6 /* BonjourBrowser.m */,
-				50158FD4163C5574000730B6 /* BonjourPublisher.h */,
-				50158FD6163C5574000730B6 /* BonjourPublisher.m */,
-			);
-			name = "Bonjour - @TODO: Remove";
-			sourceTree = "<group>";
-		};
 		5058873E161CB2C000B44D06 = {
 			isa = PBXGroup;
 			children = (
 				50D87E011673980A00CB4F65 /* Tea-Box.entitlements */,
-				50F45DA0189702980042202B /* To Do List.rtf */,
 				50588753161CB2C100B44D06 /* Tea Box */,
 				5058874C161CB2C100B44D06 /* Frameworks */,
 				5058874A161CB2C100B44D06 /* Products */,
@@ -294,11 +262,8 @@
 				50143FDE1636DD950086B8C4 /* SandboxHelper.m */,
 				50158FE1163C5F47000730B6 /* JSONKit.h */,
 				50158FE2163C5F47000730B6 /* JSONKit.m */,
-				5055EA2B1656861700E00834 /* FileObserver.h */,
-				5055EA2C1656861700E00834 /* FileObserver.m */,
 				509E4A891657FC19000D901A /* ImportFormWindow.h */,
 				509E4A8A1657FC19000D901A /* ImportFormWindow.m */,
-				50158FDA163C557E000730B6 /* Bonjour - @TODO: Remove */,
 				50EABFF2163AE0640091A4C7 /* Model Classes */,
 				50EABFF1163AE04A0091A4C7 /* NavigationBar */,
 				50EABFF3163AE0AF0091A4C7 /* Additions */,
@@ -571,19 +536,14 @@
 				50679F36163190FE000C4396 /* MainWindow.m in Sources */,
 				50143FE01636DD950086B8C4 /* SandboxHelper.m in Sources */,
 				50A5928916398B34005570E7 /* NSMenu+additions.m in Sources */,
-				50158FD7163C5574000730B6 /* BonjourBrowser.m in Sources */,
-				50158FD8163C5574000730B6 /* BonjourPublisher.m in Sources */,
 				50158FDF163C5596000730B6 /* NSInputStream+additions.m in Sources */,
 				50158FE0163C5596000730B6 /* NSOutputStream+additions.m in Sources */,
 				50158FE3163C5F47000730B6 /* JSONKit.m in Sources */,
-				503F784F163EDCB2003309FD /* BonjourService+SharedHost.m in Sources */,
 				50E5E2C91642F9DE005CEF0D /* NSDate+additions.m in Sources */,
-				50D254E3165144D700A3D458 /* BonjourFileRequest.m in Sources */,
 				50271C4F1653F841009687E6 /* DefaultDragOperationWindow.m in Sources */,
 				502A03CA165564BC004CDF08 /* Project+additions.m in Sources */,
 				502A03CE165564D0004CDF08 /* Step+additions.m in Sources */,
 				502A03D1165564E9004CDF08 /* Item+additions.m in Sources */,
-				5055EA2D1656861700E00834 /* FileObserver.m in Sources */,
 				509E4A8B1657FC19000D901A /* ImportFormWindow.m in Sources */,
 				508191B4166F764900B9217E /* NSFileManager+additions.m in Sources */,
 				50D87E041673A52100CB4F65 /* NSURL+additions.m in Sources */,

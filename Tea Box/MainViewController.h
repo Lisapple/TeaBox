@@ -21,9 +21,6 @@
 #import "NavigationBar.h"
 #import "TableView.h"
 
-#import "BonjourBrowser.h"
-#import "BonjourPublisher.h"
-
 @interface MainViewController : NSViewController <TableViewDelegate, TableViewDataSource, NavigationControllerDelegate>
 {
 	NSArray * sharedHostNames;

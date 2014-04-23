@@ -21,11 +21,6 @@
 
 #import "TBLibrary.h"
 
-#import "BonjourBrowser.h"
-#import "BonjourPublisher.h"
-#import "BonjourService+SharedHost.h"
-#import "BonjourFileRequest.h"
-
 enum _MainMenuItemTag {
 	MainMenuItemNew = 100,
 	MainMenuItemImport = 200,
@@ -38,13 +33,10 @@ enum _MainMenuItemTag {
 
 @class MainViewController;
 
-@interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, NavigationControllerDelegate, BonjourBrowserDelegate, BonjourPublisherDelegate>
+@interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, NavigationControllerDelegate>
 {
 	BOOL showingProjectViewController;
 }
-
-@property (nonatomic, readonly) BonjourBrowser * browser;
-@property (nonatomic, readonly) BonjourPublisher * publisher;
 
 @property (unsafe_unretained) IBOutlet MainWindow * window, * aboutWindow, * preferencesWindow;
 @property (unsafe_unretained) IBOutlet MainViewController * mainViewController;
