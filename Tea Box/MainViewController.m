@@ -12,13 +12,24 @@
 #import "NSMenu+additions.h"
 #import "Project+additions.h"
 
+@interface MainViewController ()
+
+@property (unsafe_unretained) IBOutlet NavigationBar * navigationBar;
+@property (unsafe_unretained) IBOutlet NSTextField * bottomLabel;
+
+@property (unsafe_unretained) IBOutlet NSWindow * createProjectWindow;
+@property (unsafe_unretained) IBOutlet NSTextField * createProjectLabel, * createProjectField;
+@property (unsafe_unretained) IBOutlet NSButton * createProjectOKButton;
+
+@end
+
 @implementation MainViewController
 
 @synthesize navigationBar = _navigationBar;
 @synthesize tableView = _tableView;
 @synthesize bottomLabel = _bottomLabel;
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
 	if (!nibNameOrNil) nibNameOrNil = @"MainViewController";
 	if (!nibBundleOrNil) nibBundleOrNil = [NSBundle mainBundle];
@@ -47,7 +58,7 @@
 																				 action:@selector(newProjectAction:)];
 	_navigationBar.rightBarButton = newProjectButton;
 	
-	[_navigationBar.rightBarButton registerForDraggedTypes:@[NSFilenamesPboardType]];// Add others types of dragging item
+	[_navigationBar.rightBarButton registerForDraggedTypes:@[NSFilenamesPboardType]]; // Add others types of dragging item
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(reloadData)
@@ -102,11 +113,18 @@
 
 - (IBAction)newProjectAction:(id)sender
 {
-	Project * project = [[Project alloc] initWithName:[self defaultNewProjectName]
-										  description:@""
-											 priority:0
-									insertIntoLibrary:[TBLibrary defaultLibrary]];
-	[self reloadData];
+	[NSApp beginSheet:_createProjectWindow modalForWindow:self.view.window
+		modalDelegate:self didEndSelector:@selector(createProjectWindowDidEnd:returnCode:contextInfo:) contextInfo:NULL];
+}
+
+- (void)createProjectWindowDidEnd:(NSWindow *)window returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
+{
+	if (returnCode == NSOKButton) {
+		Project * project = [[Project alloc] initWithName:_createProjectField.stringValue
+											  description:@"" priority:0 identifier:-1];
+		[project insertIntoLibrary:[TBLibrary defaultLibrary]];
+		[self reloadData];
+	}
 }
 
 - (NSArray *)fetchArrayOfProjects
@@ -164,8 +182,7 @@
 		Project * project = [[Project alloc] initWithName:@(filename_ptr)
 											  description:@(path_ptr)
 												 priority:priority
-										insertIntoLibrary:nil];
-		
+											   identifier:-1];
 		const char * index_path_ptr = (const char *)sqlite3_column_text(stmt, 3);
 		if (index_path_ptr)
 			project.indexPath = @(index_path_ptr);
@@ -174,7 +191,7 @@
 		NSDateFormatter * formatter = [[NSDateFormatter alloc] init];
 		formatter.locale = [NSLocale currentLocale];
 		formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
-		formatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];// Set to GMT time zone
+		formatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"]; // Set to GMT time zone
 		NSString * dateString = @(last_modification_ptr);
 		project.lastModificationDate = [formatter dateFromString:dateString];
 		
@@ -185,7 +202,6 @@
 	
 	/* destroy and release the statement */
 	sqlite3_finalize(stmt);
-	stmt = NULL;
 	
 	return projects;
 }

@@ -19,19 +19,20 @@
 @property (nonatomic, strong) NSString * description;
 @property (nonatomic, strong) Project * project;
 @property (nonatomic, strong) TBLibrary * library;
-@property (nonatomic, assign) int identifier;
+@property (nonatomic, readonly, assign) int identifier;
 @property (nonatomic, assign, getter = isClosed) BOOL closed;
 
 + (NSArray *)stepsWithProjectIdentifier:(int)projectID fromLibrary:(TBLibrary *)library;
 + (Step *)stepWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library;
 
-- (id)initWithName:(NSString *)name description:(NSString *)description project:(Project *)project insertIntoLibrary:(TBLibrary *)library;
-- (id)initWithName:(NSString *)name description:(NSString *)description closed:(BOOL)closed project:(Project *)project insertIntoLibrary:(TBLibrary *)library;
-- (id)initWithName:(NSString *)name description:(NSString *)description identifier:(int)identifier project:(Project *)project insertIntoLibrary:(TBLibrary *)library;
-- (id)initWithName:(NSString *)name description:(NSString *)description closed:(BOOL)closed identifier:(int)identifier project:(Project *)project insertIntoLibrary:(TBLibrary *)library;
+- (instancetype)initWithName:(NSString *)name description:(NSString *)description project:(Project *)project;
+- (instancetype)initWithName:(NSString *)name description:(NSString *)description closed:(BOOL)closed identifier:(int)identifier project:(Project *)project NS_DESIGNATED_INITIALIZER;
+- (BOOL)insertIntoLibrary:(TBLibrary *)library;
 
 - (void)update;
-- (NSArray *)items;
+
+- (NSUInteger)itemsCount;
+- (NSArray *)items; // Don't call this method on -[Item initWithFilename:type:rowIndex:identifier:step:]
 
 - (void)updateValue:(id)value forKey:(NSString *)key;
 

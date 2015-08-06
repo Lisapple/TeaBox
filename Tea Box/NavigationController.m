@@ -28,7 +28,6 @@ static NSMutableArray * _delegates = nil;
 	}
 }
 
-
 + (NSArray *)delegates
 {
 	return (NSArray *)_delegates;
@@ -63,7 +62,7 @@ static NSMutableArray * _delegates = nil;
 	
 	MainWindow * window = (MainWindow *)[[NSApp delegate] window];
 	
-	NSViewController * nextToLastViewController = _viewControllers[(_viewControllers.count - 2)];// Get the next to last view controller from stack
+	NSViewController * nextToLastViewController = _viewControllers[(_viewControllers.count - 2)]; // Get the next to last view controller from stack
 	NSViewController * lastViewController = [_viewControllers lastObject];
 	
 	/* Call delegates */
@@ -84,7 +83,7 @@ static NSMutableArray * _delegates = nil;
 		/* Animation informations for the currently shown view controller */
 		NSViewController * oldViewController = [_viewControllers lastObject];
 		NSRect oldFrame = oldViewController.view.frame;
-		oldFrame.origin.x = 0.;// Move view controller x position from 0 to window's width
+		oldFrame.origin.x = 0.; // Move view controller x position from 0 to window's width
 		NSRect newFrame = oldViewController.view.frame;
 		newFrame.origin.x = window.frame.size.width;
 		
@@ -94,7 +93,7 @@ static NSMutableArray * _delegates = nil;
 		
 		/* Animation informations for the view controller to show */
 		oldFrame = nextToLastViewController.view.frame;
-		oldFrame.origin.x = -window.frame.size.width;// Move view controller x position from -window's width to 0
+		oldFrame.origin.x = -window.frame.size.width; // Move view controller x position from -window's width to 0
 		newFrame = nextToLastViewController.view.frame;
 		newFrame.origin.x = 0.;
 		
@@ -167,7 +166,7 @@ static NSMutableArray * _delegates = nil;
 		/* Animation informations for the currently shown view controller */
 		NSViewController * oldViewController = [_viewControllers lastObject];
 		NSRect oldFrame = oldViewController.view.frame;
-		oldFrame.origin.x = 0.;// Move view controller x position from 0 to -window's width
+		oldFrame.origin.x = 0.; // Move view controller x position from 0 to -window's width
 		NSRect newFrame = oldViewController.view.frame;
 		newFrame.origin.x = -window.frame.size.width;
 		
@@ -177,21 +176,19 @@ static NSMutableArray * _delegates = nil;
 		
 		/* Animation informations for the view controller to show */
 		oldFrame = viewController.view.frame;
-		oldFrame.origin.x = window.frame.size.width;// Move view controller x position from window's width to 0
+		oldFrame.origin.x = window.frame.size.width; // Move view controller x position from window's width to 0
 		newFrame = viewController.view.frame;
 		newFrame.origin.x = 0.;
 		
-		NSDictionary * newViewDictionary = @{NSViewAnimationTargetKey : viewController.view,
-									   NSViewAnimationStartFrameKey : [NSValue valueWithRect:oldFrame],
-									   NSViewAnimationEndFrameKey : [NSValue valueWithRect:newFrame]};
+		NSDictionary * newViewDictionary = @{ NSViewAnimationTargetKey : viewController.view,
+											  NSViewAnimationStartFrameKey : [NSValue valueWithRect:oldFrame],
+											  NSViewAnimationEndFrameKey : [NSValue valueWithRect:newFrame] };
 		
 		/* Create and set up the animation */
 		NSViewAnimation * animation = [[NSViewAnimation alloc] initWithViewAnimations:@[oldViewDictionary, newViewDictionary]];
 		[animation setDuration:kPushAnimationDuration];
 		[animation setAnimationCurve:NSAnimationEaseInOut];
-		
 		[animation startAnimation];
-		
 		
 		double delayInSeconds = kPushAnimationDuration;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
@@ -234,7 +231,6 @@ static NSMutableArray * _delegates = nil;
 {
 	[_viewControllers removeAllObjects];
 	[_delegates removeAllObjects];
-	
 }
 
 @end

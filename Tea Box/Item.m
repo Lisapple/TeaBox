@@ -13,206 +13,186 @@
 
 @implementation Item
 
-@synthesize step = _step;
-@synthesize filename = _filename;
-@synthesize identifier = _identifier, rowIndex = _rowIndex;
-@synthesize type = _type;
-@synthesize library = _library;
+NSString * const kItemTypeImage	= @"IMG";
+NSString * const kItemTypeText	= @"TXT";
+NSString * const kItemTypeWebURL = @"URL";
+NSString * const kItemTypeFile	= @"FILE";
+NSString * const kItemTypeFolder = @"FOLD";
+NSString * const kItemTypeUnkown = @"????";
 
 + (NSArray *)itemsWithStepIdentifier:(int)stepID fromLibrary:(TBLibrary *)library
 {
 	NSMutableArray * items = [NSMutableArray arrayWithCapacity:10];
+	Step * step = [Step stepWithIdentifier:stepID fromLibrary:library];
 	
-	/* create a statement from an SQL string */
+	// Create a statement from an SQL string
 	sqlite3_stmt * stmt = NULL;
 	const char sql[] = "SELECT filename, type, Item_id FROM Item WHERE Step_id = :step_id ORDER BY Step_id ASC";
 	int err = sqlite3_prepare_v2(library.database, sql, -1, &stmt, NULL);
-	NSAssert((err != SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
+	NSAssert((err == SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
 	
 	int step_id_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
 	err = sqlite3_bind_int(stmt, step_id_bind, stepID);
-	NSAssert((err != SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
+	NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
 	
-	/* execute statement and step over each row of the result set */
+	// Execute statement and step over each row of the result set
 	while (sqlite3_step(stmt) == SQLITE_ROW)
 	{
 		NSString * filename = nil;
-		const char * filename_ptr = (const char *)sqlite3_column_text(stmt, 0);// "filename"
+		const char * filename_ptr = (const char *)sqlite3_column_text(stmt, 0 /* "filename" */);
 		if (filename_ptr)
 			filename = @(filename_ptr);
 		
 		NSString * type = nil;
-		const char * type_ptr = (const char *)sqlite3_column_text(stmt, 1);// "type"
+		const char * type_ptr = (const char *)sqlite3_column_text(stmt, 1 /* "type" */);
 		if (type_ptr)
 			type = @(type_ptr);
 		
-		Item * item = [[Item alloc] init];
-		item.filename = filename;
-		item.type = type;
-		item.identifier = sqlite3_column_int(stmt, 2);// "Step_id"
+		int identifier = sqlite3_column_int(stmt, 2 /* "Step_id" */);
+		Item * item = [[Item alloc] initWithFilename:filename type:type rowIndex:-1 identifier:identifier step:step];
 		item.library = library;
 		
 		[items addObject:item];
 	}
 	
-	/* destroy and release the statement */
+	// Destroy and release the statement
 	sqlite3_finalize(stmt);
-	stmt = NULL;
 	
 	return items;
 }
 
 + (Item *)itemWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library
 {
-	/* create a statement from an SQL string */
+	// Create a statement from an SQL string
 	sqlite3_stmt * stmt = NULL;
 	const char sql[] = "SELECT filename, type, Step_id FROM Item WHERE Item_id = :item_id ORDER BY Step_id ASC LIMIT 1";
 	int err = sqlite3_prepare_v2(library.database, sql, -1, &stmt, NULL);
-	NSAssert((err != SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
+	NSAssert((err == SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
 	
 	int item_id_bind = sqlite3_bind_parameter_index(stmt, ":item_id");
 	err = sqlite3_bind_int(stmt, item_id_bind, identifier);
-	NSAssert((err != SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
+	NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
 	
 	Item * item = nil;
-	/* execute statement and step over each row of the result set */
+	// Execute statement and step over each row of the result set
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
 		NSString * filename = nil;
-		const char * filename_ptr = (const char *)sqlite3_column_text(stmt, 0);// "filename"
+		const char * filename_ptr = (const char *)sqlite3_column_text(stmt, 0 /* "filename" */);
 		if (filename_ptr)
 			filename = @(filename_ptr);
 		
 		NSString * type = nil;
-		const char * type_ptr = (const char *)sqlite3_column_text(stmt, 1);// "type"
+		const char * type_ptr = (const char *)sqlite3_column_text(stmt, 1 /* "type" */);
 		if (type_ptr)
 			type = @(type_ptr);
 		
-		int stepID = sqlite3_column_int(stmt, 2);// "Step_id"
+		int stepID = sqlite3_column_int(stmt, 2 /* "Step_id" */);
 		Step * step = [Step stepWithIdentifier:stepID fromLibrary:library];
-		
-		item = [[Item alloc] init];
-		item.filename = filename;
-		item.type = type;
-		item.identifier = identifier;
-		item.step = step;
+		item = [[Item alloc] initWithFilename:filename type:type rowIndex:-1 identifier:identifier step:step];
 		item.library = library;
 	}
 	
-	/* destroy and release the statement */
+	// Destroy and release the statement
 	sqlite3_finalize(stmt);
-	stmt = NULL;
 	
 	return item;
 }
 
-- (id)initWithFilename:(NSString *)filename type:(NSString *)type rowIndex:(int)rowIndex step:(Step *)step insertIntoLibrary:(TBLibrary *)library
+- (instancetype)initWithFilename:(NSString *)filename type:(NSString *)type step:(Step *)step
 {
-	return [self initWithFilename:filename type:type rowIndex:rowIndex identifier:-1 step:step insertIntoLibrary:library];
+	return [self initWithFilename:filename type:type rowIndex:-1 identifier:-1 step:step];
 }
 
-- (id)initWithFilename:(NSString *)filename type:(NSString *)type rowIndex:(int)rowIndex identifier:(int)identifier step:(Step *)step insertIntoLibrary:(TBLibrary *)library
+- (instancetype)initWithFilename:(NSString *)filename type:(NSString *)type rowIndex:(int)rowIndex identifier:(int)identifier step:(Step *)step
 {
-	if ((self = [super init])) {
-		self.filename = filename;
-		self.type = type;
+	if (self = [super init]) {
+		_identifier = identifier;
+		_filename = filename;
+		_type = type;
 		self.step = step;
-		self.library = library;
 		
-		int count = (int)[_step items].count;
+		int count = (int)_step.itemsCount;
 		if (rowIndex < 0 || rowIndex > count)
 			rowIndex = count;
 		
 		self.rowIndex = rowIndex;
-		
-		if (library) {
-			
-			sqlite3 * database = library.database;
-			
-			/* Create a lock when sending the 2 queries */
-			sqlite3_mutex * mutex = sqlite3_db_mutex(database);
-			sqlite3_mutex_enter(mutex);
-			
-			/* Create the SQL query */
-			char * sql = NULL;
-			if (identifier == -1) {// If no "identifier", let SQLite generate one
-				sql = "INSERT OR REPLACE INTO Item (Step_id, filename, type, row_index) VALUES (:step_id, :filename, :type, :row_index)";
-			} else {
-				sql = "INSERT OR REPLACE INTO Item (Step_id, filename, type, row_index, Item_id) VALUES (:step_id, :filename, :type, :row_index, :item_id)";
-			}
-			
-			/* Create the statment and the SQL query */
-			sqlite3_stmt *stmt = NULL;
-			int err = sqlite3_prepare_v2(database, sql, -1, &stmt, NULL);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the description to the statment */
-			int step_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
-			err = sqlite3_bind_int(stmt, step_bind, step.identifier);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the name to the statment */
-			int filename_bind = sqlite3_bind_parameter_index(stmt, ":filename");
-			err = sqlite3_bind_text(stmt, filename_bind, [filename UTF8String], -1, SQLITE_TRANSIENT);// "-1" to let SQLite to compute the length of the string, SQLITE_TRANSIENT means that the memory of the string is managed by SQLite
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the type to the statment */
-			int type_bind = sqlite3_bind_parameter_index(stmt, ":type");
-			err = sqlite3_bind_text(stmt, type_bind, [type UTF8String], -1, SQLITE_TRANSIENT);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the row index to the statment */
-			int row_index_bind = sqlite3_bind_parameter_index(stmt, ":row_index");
-			err = sqlite3_bind_int(stmt, row_index_bind, rowIndex);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			if (identifier != -1) {
-				/* Bind the item id to the statment */
-				int item_id_bind = sqlite3_bind_parameter_index(stmt, ":item_id");
-				err = sqlite3_bind_int(stmt, item_id_bind, identifier);
-				if (err != SQLITE_OK) {
-					NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
-					return nil;
-				}
-			}
-			
-			/* Execute the statment */
-			err = sqlite3_step(stmt);
-			if (err == SQLITE_DONE) {
-				NSAssert(false, @"\"sqlite3_step\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			if (identifier == -1) {
-				/* Get the id of the project (second query) */
-				sqlite3_int64 last_id = sqlite3_last_insert_rowid(database);
-				
-				_identifier = (int)last_id;
-			} else {
-				_identifier = identifier;
-			}
-			
-			/* Free the lock */
-			sqlite3_mutex_leave(mutex);
-		}
+	}
+	return self;
+}
+
+- (BOOL)insertIntoLibrary:(TBLibrary *)library
+{
+	NSParameterAssert(library);
+	
+	self.library = library;
+	
+	sqlite3 * database = library.database;
+	
+	/* Create a lock when sending the 2 queries */
+	sqlite3_mutex * mutex = sqlite3_db_mutex(database);
+	sqlite3_mutex_enter(mutex);
+	
+	/* Create the SQL query */
+	char * sql = NULL;
+	if (_identifier == -1) { // If no "identifier", let SQLite generate one
+		sql = "INSERT OR REPLACE INTO Item (Step_id, filename, type, row_index) VALUES (:step_id, :filename, :type, :row_index)";
+	} else {
+		sql = "INSERT OR REPLACE INTO Item (Step_id, filename, type, row_index, Item_id) VALUES (:step_id, :filename, :type, :row_index, :item_id)";
 	}
 	
-	return self;
+	/* Create the statment and the SQL query */
+	sqlite3_stmt *stmt = NULL;
+	int err = sqlite3_prepare_v2(database, sql, -1, &stmt, NULL);
+	if (err != SQLITE_OK)
+		return NO;
+	
+	/* Bind the description to the statment */
+	int step_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
+	err = sqlite3_bind_int(stmt, step_bind, _step.identifier);
+	if (err != SQLITE_OK)
+		return NO;
+	
+	/* Bind the name to the statment */
+	int filename_bind = sqlite3_bind_parameter_index(stmt, ":filename");
+	err = sqlite3_bind_text(stmt, filename_bind, _filename.UTF8String, -1, SQLITE_TRANSIENT); // "-1" to let SQLite to compute the length of the string, SQLITE_TRANSIENT means that the memory of the string is managed by SQLite
+	if (err != SQLITE_OK)
+		return NO;
+	
+	/* Bind the type to the statment */
+	int type_bind = sqlite3_bind_parameter_index(stmt, ":type");
+	err = sqlite3_bind_text(stmt, type_bind, _type.UTF8String, -1, SQLITE_TRANSIENT);
+	if (err != SQLITE_OK)
+		return NO;
+	
+	/* Bind the row index to the statment */
+	int row_index_bind = sqlite3_bind_parameter_index(stmt, ":row_index");
+	err = sqlite3_bind_int(stmt, row_index_bind, _rowIndex);
+	if (err != SQLITE_OK)
+		return NO;
+	
+	if (_identifier != -1) {
+		/* Bind the item id to the statment */
+		int item_id_bind = sqlite3_bind_parameter_index(stmt, ":item_id");
+		err = sqlite3_bind_int(stmt, item_id_bind, _identifier);
+		if (err != SQLITE_OK)
+			return NO;
+	}
+	
+	/* Execute the statment */
+	err = sqlite3_step(stmt);
+	if (err != SQLITE_DONE)
+		return NO;
+	
+	if (_identifier == -1) {
+		/* Get the id of the project (second query) */
+		_identifier = (int)sqlite3_last_insert_rowid(database);
+	}
+	
+	/* Free the lock */
+	sqlite3_mutex_leave(mutex);
+	
+	return YES;
 }
 
 - (void)updateRowIndex:(int)rowIndex
@@ -228,15 +208,15 @@
 		sqlite3_stmt * stmt = NULL;
 		const char sql[] = "UPDATE item SET row_index = (row_index - 1) WHERE (Step_id == :step_id AND row_index > :row_index)";
 		int err = sqlite3_prepare_v2(_step.project.library.database, sql, -1, &stmt, NULL);
-		NSAssert((err != SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
 		
 		int step_id_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
 		err = sqlite3_bind_int(stmt, step_id_bind, _step.identifier);
-		NSAssert((err != SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
 		
 		int row_index_bind = sqlite3_bind_parameter_index(stmt, ":row_index");
 		err = sqlite3_bind_int(stmt, row_index_bind, self.rowIndex);
-		NSAssert((err != SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
 		
 		if (sqlite3_step(stmt) != SQLITE_DONE) {
 			NSAssert(false, @"\"sqlite3_step\" did fail with error: %d", err);
@@ -252,15 +232,15 @@
 		/* Prepare and execute the second request that fix indexes to all next rows (increment rows index) */
 		const char sql2[] = "UPDATE item SET row_index = (row_index + 1) WHERE (Step_id == :step_id AND row_index >= :row_index)";
 		err = sqlite3_prepare_v2(_step.project.library.database, sql2, -1, &stmt, NULL);
-		NSAssert((err != SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
 		
 		step_id_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
 		err = sqlite3_bind_int(stmt, step_id_bind, _step.identifier);
-		NSAssert((err != SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
 		
 		row_index_bind = sqlite3_bind_parameter_index(stmt, ":row_index");
 		err = sqlite3_bind_int(stmt, row_index_bind, self.rowIndex);
-		NSAssert((err != SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
 		
 		if (sqlite3_step(stmt) != SQLITE_DONE) {
 			NSAssert(false, @"\"sqlite3_step\" did fail with error: %d", err);
@@ -269,7 +249,6 @@
 		
 		/* destroy and release the statement */
 		sqlite3_finalize(stmt);
-		stmt = NULL;
 	}
 }
 
@@ -280,7 +259,7 @@
 		sqlite3_stmt * stmt = NULL;
 		NSString * sql = [NSString stringWithFormat:@"UPDATE Item SET %@ = :value WHERE Item_id = :item_id", name];
 		int err = sqlite3_prepare_v2(_step.project.library.database, [sql UTF8String], -1, &stmt, NULL);
-			NSAssert((err != SQLITE_OK), @"\"sqlite3_step\" did fail with error: %d", err);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
 		
 		int value_bind = sqlite3_bind_parameter_index(stmt, ":value");
 		
@@ -292,11 +271,11 @@
 			err = sqlite3_bind_text(stmt, value_bind, [[value description] UTF8String], -1, SQLITE_TRANSIENT);
 		}
 		
-		NSAssert((err != SQLITE_OK), @"\"sqlite3_bind_*\" did fail with error: %d", err);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_*\" did fail with error: %d", err);
 		
-		int step_id_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
-		err = sqlite3_bind_int(stmt, step_id_bind, self.identifier);
-		NSAssert((err != SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error: %d", err);
+		int item_id_bind = sqlite3_bind_parameter_index(stmt, ":item_id");
+		err = sqlite3_bind_int(stmt, item_id_bind, self.identifier);
+		NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_int\" did fail with error %d when inserting %d", err, self.identifier);
 		
 		if (sqlite3_step(stmt) != SQLITE_DONE) {
 			NSAssert(false, @"\"sqlite3_step\" did fail with error: %d", err);
@@ -305,7 +284,6 @@
 		
 		/* destroy and release the statement */
 		sqlite3_finalize(stmt);
-		stmt = NULL;
 	}
 }
 
@@ -318,9 +296,47 @@
 	[self updateDatabaseValue:value forColumnName:key];
 }
 
+- (BOOL)moveToStep:(Step *)destinationStep
+{
+	[self updateDatabaseValue:@(destinationStep.identifier) forColumnName:@"Step_id"];
+
+	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+	NSString * key = [NSString stringWithFormat:@"%i/%i/%i", _step.project.identifier, _step.identifier, _identifier];
+	NSData * bookmarkData = [userDefaults dataForKey:key];
+	
+	if (self.filename) { // Copied or moved item, move it to new step folder
+		
+		NSString * path = [NSString stringWithFormat:@"%@/%@", [self.library pathForStepFolder:_step], self.filename];
+		NSString * newPath = [NSString stringWithFormat:@"%@/%@", [self.library pathForStepFolder:destinationStep], self.filename];
+		BOOL success = [[NSFileManager defaultManager] moveItemAtPath:path toPath:newPath error:NULL];
+		if (!success)
+			return NO;
+		
+		// Update bookmark data
+		NSUInteger bookmarkOptions = 0;
+#if _SANDBOX_SUPPORTED_
+		bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
+#endif
+		bookmarkData = [[NSURL fileURLWithPath:newPath] bookmarkDataWithOptions:bookmarkOptions
+												 includingResourceValuesForKeys:nil
+																  relativeToURL:nil
+																		  error:NULL];
+	}
+	
+	_step = destinationStep;
+	
+	if (bookmarkData) { // Save new bookmark data
+		NSString * newkey = [NSString stringWithFormat:@"%i/%i/%i", _step.project.identifier, _step.identifier, _identifier];
+		[userDefaults setObject:bookmarkData forKey:newkey];
+		[userDefaults removeObjectForKey:key];
+	}
+	
+	return YES;
+}
+
 - (BOOL)delete
 {
-	/* create a statement from an SQL string */
+	// Create a statement from an SQL string
 	sqlite3_stmt * stmt = NULL;
 	const char sql[] = "DELETE FROM Item WHERE (Item_id = :item_id)";
 	int err = sqlite3_prepare_v2(_step.project.library.database, sql, -1, &stmt, NULL);
@@ -329,8 +345,8 @@
 		return NO;
 	}
 	
-	int step_id_bind = sqlite3_bind_parameter_index(stmt, ":item_id");
-	err = sqlite3_bind_int(stmt, step_id_bind, self.identifier);
+	int item_id_bind = sqlite3_bind_parameter_index(stmt, ":item_id");
+	err = sqlite3_bind_int(stmt, item_id_bind, self.identifier);
 	if (err != SQLITE_OK) {
 		NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
 		return NO;
@@ -338,180 +354,14 @@
 	
 	if (sqlite3_step(stmt) != SQLITE_DONE) {
 		NSAssert(false, @"\"sqlite3_step\" did fail with error: %d", err);
-		NSLog(@"error on update resquest: %s", sql);
+		NSLog(@"error on update request: %s", sql);
 		return NO;
 	}
 	
-	/* destroy and release the statement */
+	// Destroy and release the statement
 	sqlite3_finalize(stmt);
-	stmt = NULL;
 	
 	return YES;
-}
-
-- (id)initWithFilename:(NSString *)filename path:(NSString *)path device:(NSString *)deviceOrNil type:(NSString *)type step:(Step *)step rowIndex:(int)rowIndex insertIntoDatabase:(sqlite3 *)database
-{
-	return [self initWithFilename:filename type:type step:step rowIndex:rowIndex insertIntoDatabase:database];
-}
-
-- (id)initWithFilename:(NSString *)filename type:(NSString *)type identifier:(int)identifier step:(Step *)step rowIndex:(int)rowIndex insertIntoDatabase:(sqlite3 *)database
-{
-	if ((self = [super init])) {
-		self.filename = filename;
-		self.type = type;
-		self.step = step;
-		
-		if (database) {
-			
-			int count = (int)[_step items].count;
-			if (rowIndex < 0 || rowIndex > count)
-				rowIndex = count;
-			
-			self.rowIndex = rowIndex;
-			
-			/* Create a lock when sending the 2 queries */
-			sqlite3_mutex * mutex = sqlite3_db_mutex(database);
-			sqlite3_mutex_enter(mutex);
-			
-			/* Create the statment and the SQL query */
-			sqlite3_stmt *stmt = NULL;
-			const char sql[] = "INSERT INTO Item (Step_id, filename, type, row_index, Item_id) VALUES (:step_id, :filename, :type, :row_index, :item_id)";
-			int err = sqlite3_prepare_v2(database, sql, -1, &stmt, NULL);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the description to the statment */
-			int step_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
-			err = sqlite3_bind_int(stmt, step_bind, step.identifier);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the name to the statment */
-			int filename_bind = sqlite3_bind_parameter_index(stmt, ":filename");
-			err = sqlite3_bind_text(stmt, filename_bind, [filename UTF8String], -1, SQLITE_TRANSIENT);// "-1" to let SQLite to compute the length of the string, SQLITE_TRANSIENT means that the memory of the string is managed by SQLite
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the type to the statment */
-			int type_bind = sqlite3_bind_parameter_index(stmt, ":type");
-			err = sqlite3_bind_text(stmt, type_bind, [type UTF8String], -1, SQLITE_TRANSIENT);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the row index to the statment */
-			int row_index_bind = sqlite3_bind_parameter_index(stmt, ":row_index");
-			err = sqlite3_bind_int(stmt, row_index_bind, rowIndex);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the item id to the statment */
-			int item_id_bind = sqlite3_bind_parameter_index(stmt, ":item_id");
-			err = sqlite3_bind_int(stmt, item_id_bind, rowIndex);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Execute the statment */
-			NSAssert((sqlite3_step(stmt) != SQLITE_DONE), @"\"sqlite3_step\" did fail with error: %d", err);
-			
-			/* Get the id of the project (the second query) */
-			sqlite3_int64 last_id = sqlite3_last_insert_rowid(database);
-			
-			/* Free the lock */
-			sqlite3_mutex_leave(mutex);
-			
-			_identifier = (int)last_id;
-		}
-	}
-	
-	return self;
-}
-
-- (id)initWithFilename:(NSString *)filename type:(NSString *)type step:(Step *)step rowIndex:(int)rowIndex insertIntoDatabase:(sqlite3 *)database
-{
-	if ((self = [super init])) {
-		self.filename = filename;
-		self.type = type;
-		self.step = step;
-		
-		if (database) {
-			
-			int count = (int)[_step items].count;
-			if (rowIndex < 0 || rowIndex > count)
-				rowIndex = count;
-			
-			self.rowIndex = rowIndex;
-			
-			/* Create a lock when sending the 2 queries */
-			sqlite3_mutex * mutex = sqlite3_db_mutex(database);
-			sqlite3_mutex_enter(mutex);
-			
-			/* Create the statment and the SQL query */
-			sqlite3_stmt *stmt = NULL;
-			const char sql[] = "INSERT INTO Item (Step_id, filename, type, row_index) VALUES (:step_id, :filename, :type, :row_index)";
-			int err = sqlite3_prepare_v2(database, sql, -1, &stmt, NULL);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the description to the statment */
-			int step_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
-			err = sqlite3_bind_int(stmt, step_bind, step.identifier);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the name to the statment */
-			int filename_bind = sqlite3_bind_parameter_index(stmt, ":filename");
-			err = sqlite3_bind_text(stmt, filename_bind, [filename UTF8String], -1, SQLITE_TRANSIENT);// "-1" to let SQLite to compute the length of the string, SQLITE_TRANSIENT means that the memory of the string is managed by SQLite
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the type to the statment */
-			int type_bind = sqlite3_bind_parameter_index(stmt, ":type");
-			err = sqlite3_bind_text(stmt, type_bind, [type UTF8String], -1, SQLITE_TRANSIENT);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Bind the row index to the statment */
-			int row_index_bind = sqlite3_bind_parameter_index(stmt, ":row_index");
-			err = sqlite3_bind_int(stmt, row_index_bind, rowIndex);
-			if (err != SQLITE_OK) {
-				NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
-				return nil;
-			}
-			
-			/* Execute the statment */
-			NSAssert((sqlite3_step(stmt) != SQLITE_DONE), @"\"sqlite3_bind_int\" did fail with error: %d", err);
-			
-			/* Get the id of the project (the second query) */
-			sqlite3_int64 last_id = sqlite3_last_insert_rowid(database);
-			
-			/* Free the lock */
-			sqlite3_mutex_leave(mutex);
-			
-			_identifier = (int)last_id;
-		}
-	}
-	
-	return self;
 }
 
 - (NSString *)description

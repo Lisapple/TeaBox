@@ -7,6 +7,7 @@
 //
 
 #import <AppKit/AppKit.h>
+#import "Step.h"
 
 @class ImportFormWindow;
 @protocol ImportFormWindowDelegate <NSObject>
@@ -26,6 +27,7 @@
 @property (nonatomic, strong) id <ImportFormWindowDelegate> importDelegate;
 
 @property (unsafe_unretained, nonatomic, readonly) id objectValue;
+@property (strong) Step * target;
 
 - (IBAction)cancelAction:(id)sender;
 - (IBAction)okAction:(id)sender;

@@ -41,17 +41,14 @@
 
 - (IBAction)pathControlDidSelectPath:(id)sender
 {
-	selectedURL = [_pathControl.URL copy];
-}
-
-- (void)close
-{
-    if (selectedURL) {
-        NSString * libraryName = [TBLibrary defaultLibrary].path.lastPathComponent;
-        [[TBLibrary defaultLibrary] moveLibraryToPath:[selectedURL.path stringByAppendingFormat:@"/%@", libraryName]
-                                                error:NULL];
-    }
-	[super close];
+	selectedURL = _pathControl.URL.copy;
+	if (selectedURL) {
+		_pathControl.enabled = NO;
+		NSString * libraryName = [TBLibrary defaultLibrary].path.lastPathComponent;
+		[[TBLibrary defaultLibrary] moveLibraryToPath:[selectedURL.path stringByAppendingFormat:@"/%@", libraryName]
+												error:NULL];
+		_pathControl.enabled = YES;
+	}
 }
 
 - (IBAction)defaultDragMenuDidSelect:(id)sender
@@ -85,6 +82,7 @@
 {
 	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 	[userDefaults removeObjectForKey:@"Alerts to Hide"];
+	[userDefaults synchronize];
 }
 
 - (IBAction)showHelpAction:(id)sender

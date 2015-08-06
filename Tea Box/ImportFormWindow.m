@@ -37,7 +37,7 @@
 @synthesize image = _image;
 @synthesize delegate;
 
-- (id)initWithFrame:(NSRect)frameRect
+- (instancetype)initWithFrame:(NSRect)frameRect
 {
 	if ((self = [super initWithFrame:frameRect])) {
 		[self registerForDraggedTypes:@[@"public.image", @"public.url", NSPasteboardTypePNG, NSPasteboardTypeTIFF, NSPasteboardTypeString]];
@@ -109,7 +109,7 @@
 @synthesize progressIndicator = _progressIndicator;
 @synthesize descriptionLabel = _descriptionLabel;
 
-- (id)initWithCoder:(NSCoder *)aDecoder
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
     if ((self = [super initWithCoder:aDecoder])) {
     }
@@ -154,7 +154,7 @@
 	_imageView.image = nil;
 	
 	/* Download the image asynchronously */
-	receivedData = [[NSMutableData alloc] initWithCapacity:(1024 * 1024 * 4)];// 4 Mb sized
+	receivedData = [[NSMutableData alloc] initWithCapacity:(1024 * 1024 * 4)]; // 4 Mb sized
 	
 	NSURLRequest * request = [[NSURLRequest alloc] initWithURL:imageURL];
 	_connection = [[NSURLConnection alloc] initWithRequest:request
@@ -206,7 +206,7 @@
 @synthesize inputTextField = _inputTextField;
 @synthesize descriptionLabel = _descriptionLabel;
 
-- (id)initWithCoder:(NSCoder *)aDecoder
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
     if ((self = [super initWithCoder:aDecoder])) {
 		_inputTextField.delegate = self;
@@ -259,7 +259,7 @@
 
 @synthesize inputTextView = _inputTextView;
 
-- (id)initWithCoder:(NSCoder *)aDecoder
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
     if ((self = [super initWithCoder:aDecoder])) {
     }

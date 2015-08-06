@@ -23,13 +23,22 @@
 - (NSURL *)previewItemURL
 {
 	NSString * path = [self.library pathForItem:self];
-    return [NSURL fileURLWithPath:path];
+	return (path) ? [NSURL fileURLWithPath:path] : nil;
 }
 
 - (NSString *)previewItemTitle
 {
     return self.filename;
 }
+
+@end
+
+
+@interface ProjectViewController ()
+
+@property (unsafe_unretained) IBOutlet NSWindow * createStepWindow;
+@property (unsafe_unretained) IBOutlet NSTextField * createStepLabel, * createStepField;
+@property (unsafe_unretained) IBOutlet NSButton * createStepOKButton;
 
 @end
 
@@ -51,7 +60,7 @@
 
 @synthesize quickLookMenuItem = _quickLookMenuItem;
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
 	if (!nibNameOrNil) nibNameOrNil = @"ProjectViewController";
 	if (!nibBundleOrNil) nibBundleOrNil = [NSBundle mainBundle];
@@ -82,16 +91,16 @@
 	self.tableView.dataSource = self;
 	self.tableView.rowHeight = 24.;
 	
-	NavigationBarButton * backButton = [[NavigationBarButton alloc] initWithType:kNavigationBarButtonTypeBack
-																		  target:self
-																		  action:@selector(backAction:)];
+	NavigationBarButton * backButton = [[NavigationBarButton alloc] initWithType:NavigationBarButtonTypeBack
+																		  target:self action:@selector(backAction:)];
 	self.navigationBar.leftBarButton = backButton;
 	
+	NavigationBarButton * importButton = [[NavigationBarButton alloc] initWithTitle:@"Import..."
+																			 target:self action:@selector(importAction:)];
 	NavigationBarButton * editButton = [[NavigationBarButton alloc] initWithTitle:@"Edit"
-																		   target:self
-																		   action:@selector(editAction:)];
+																		   target:self action:@selector(editAction:)];
 	[editButton registerForDraggedTypes:draggedTypes];
-	self.navigationBar.rightBarButton = editButton;
+	self.navigationBar.rightBarButtons = @[ editButton, importButton ];
 	
 	self.navigationBar.delegate = self;
 	[self.navigationBar registerForDraggedTypes:draggedTypes];
@@ -282,24 +291,22 @@
 	/* Change the NavigationBar, show "Back" and "Edit" when not editing, show "Cancel" and "Done" if editing */
 	if (editing) {
 		NavigationBarButton * cancelButton = [[NavigationBarButton alloc] initWithTitle:@"Cancel"
-																				 target:self
-																				 action:@selector(cancelAction:)];
+																				 target:self action:@selector(cancelAction:)];
 		_navigationBar.leftBarButton = cancelButton;
 		
-		NavigationBarButton * doneButton = [[NavigationBarButton alloc] initWithType:kNavigationBarButtonTypeDone
-																			  target:self
-																			  action:@selector(doneAction:)];
+		NavigationBarButton * doneButton = [[NavigationBarButton alloc] initWithType:NavigationBarButtonTypeDone
+																			  target:self action:@selector(doneAction:)];
 		_navigationBar.rightBarButton = doneButton;
 	} else {
-		NavigationBarButton * backButton = [[NavigationBarButton alloc] initWithType:kNavigationBarButtonTypeBack
-																			  target:self
-																			  action:@selector(backAction:)];
+		NavigationBarButton * backButton = [[NavigationBarButton alloc] initWithType:NavigationBarButtonTypeBack
+																			  target:self action:@selector(backAction:)];
 		_navigationBar.leftBarButton = backButton;
 		
+		NavigationBarButton * importButton = [[NavigationBarButton alloc] initWithTitle:@"Import..."
+																				 target:self action:@selector(importAction:)];
 		NavigationBarButton * editButton = [[NavigationBarButton alloc] initWithTitle:@"Edit"
-																			   target:self
-																			   action:@selector(editAction:)];
-		_navigationBar.rightBarButton = editButton;
+																			   target:self action:@selector(editAction:)];
+		_navigationBar.rightBarButtons = @[ editButton, importButton ];
 	}
 	
 	_navigationBar.editable = editing;
@@ -345,7 +352,7 @@
 			for (NSString * path in paths) {
 				NSNumber * isDirectory = nil;
 				[[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
-				if ([isDirectory boolValue]) { containsDirectory = YES; break; }
+				if (isDirectory.boolValue) { containsDirectory = YES; break; }
 			}
 			
 			if (containsDirectory) {
@@ -425,16 +432,28 @@
 	return stepName;
 }
 
-- (IBAction)newStepAction:(id)sender
+- (IBAction)newStepAction:(id)sender DEPRECATED_ATTRIBUTE
 {
-	Step * step = [[Step alloc] initWithName:[self defaultNewStepName]
-								 description:@""
-									 project:_project
-						   insertIntoLibrary:_project.library];
-	[self reloadData];
-	
-	NSInteger section = 1 + ((showsIndexDescription || _editing)? 1 : 0) + steps.count;
-	[self.tableView scrollToSection:section openSection:NO position:TableViewPositionNone];
+	[self createStepAction:sender];
+}
+
+- (IBAction)createStepAction:(id)sender
+{
+	[NSApp beginSheet:_createStepWindow modalForWindow:self.view.window
+		modalDelegate:self didEndSelector:@selector(createStepWindowDidEnd:returnCode:contextInfo:) contextInfo:NULL];
+}
+
+- (void)createStepWindowDidEnd:(NSWindow *)window returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
+{
+	if (returnCode == NSOKButton) {
+		Step * step = [[Step alloc] initWithName:_createStepField.stringValue
+									 description:@"" project:_project];
+		[step insertIntoLibrary:_project.library];
+		[self reloadData];
+		
+		NSInteger section = 1 + ((showsIndexDescription || _editing)? 1 : 0) + steps.count;
+		[self.tableView scrollToSection:section openSection:NO position:TableViewPositionNone];
+	}
 }
 
 - (IBAction)backAction:(id)sender
@@ -478,14 +497,26 @@
 - (IBAction)priorityPopUpDidChangeAction:(id)sender
 {
 	NSMenuItem * item = (NSMenuItem *)sender;
-	NSInteger index = ([item.menu indexOfItem:item] - 1);// Minus one for "Priority"
-	NSInteger count = (item.menu.numberOfItems - 1);// Minus one for "Priority"
+	NSInteger index = ([item.menu indexOfItem:item] - 1); // Minus one for "Priority"
+	NSInteger count = (item.menu.numberOfItems - 1); // Minus one for "Priority"
 	if (0 <= index && index < count) {
 		NSLog(@"priorityPopUpDidChangeAction: \"%@\" (%ld)", item.title, item.tag);
 		[_project updateValue:@(item.tag)
 					   forKey:@"priority"];
 		[self reloadBottomLabel];
 	}
+}
+
+- (IBAction)importAction:(NSButton *)sender
+{
+	NSMenu * menu = [[NSMenu alloc] initWithTitle:@""];
+	[menu addItemWithTitle:@"Image..." target:self action:@selector(importImageAction:) tag:-1];
+	[menu addItemWithTitle:@"Web Link..." target:self action:@selector(importURLAction:) tag:-1];
+	[menu addItemWithTitle:@"Text..." target:self action:@selector(importTextAction:) tag:-1];
+	[menu addItemWithTitle:@"Files and Folders..." target:self action:@selector(importFilesAndFoldersAction:) tag:-1];
+	[menu popUpMenuPositioningItem:nil
+						atLocation:NSMakePoint(sender.frame.origin.x, sender.frame.origin.y + sender.frame.size.height + 5.)
+							inView:sender.superview];
 }
 
 - (IBAction)editAction:(id)sender
@@ -497,7 +528,7 @@
 
 - (IBAction)doneAction:(id)sender
 {
-	[_project updateValue:_navigationBar.textField.stringValue// Get the value of the navigationBar's textField and not the navigationBar's title because at this point, the textField is editing so the new value have not been saved
+	[_project updateValue:_navigationBar.textField.stringValue // Get the value of the navigationBar's textField and not the navigationBar's title because at this point, the textField is editing so the new value have not been saved
 				   forKey:@"name"];
 	[_project updateValue:_descriptionTextField.stringValue
 				   forKey:@"description"];
@@ -601,7 +632,9 @@
 	NSString * path = [item.library pathForItem:item];
 	
 	NSOpenPanel * openPanel = [NSOpenPanel openPanel];
-	openPanel.directoryURL = [NSURL fileURLWithPath:[path stringByDeletingLastPathComponent]];
+	if (path.stringByDeletingLastPathComponent) {
+		openPanel.directoryURL = [NSURL fileURLWithPath:[path stringByDeletingLastPathComponent]];
+	}
 	openPanel.allowsMultipleSelection = NO;
 	openPanel.canChooseDirectories = YES;
 	openPanel.canChooseFiles = YES;
@@ -643,7 +676,7 @@
 								  NSString * key = [NSString stringWithFormat:@"%i/%i/%i", item.step.project.identifier, item.step.identifier, item.identifier];
 								  [userDefaults setObject:bookmarkData forKey:key];
 								  
-								  [item updateValue:[newPath lastPathComponent] forKey:nil];// Set "item.filename" to nil
+								  //[item updateValue:[newPath lastPathComponent] forKey:nil]; // Set "item.filename" to nil
 							  }
 							  
 							  [self.tableView reloadData];
@@ -707,10 +740,9 @@
 
 - (void)deleteItemConfirmationAlertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
 {
-	BOOL success = YES;
 	Item * item = (__bridge Item *)contextInfo;
 	if (returnCode == NSAlertDefaultReturn) {// "Delete"
-		success = [item delete];
+		[item delete];
 	} else {// "Cancel"
 	}
 	
@@ -719,10 +751,9 @@
 
 - (void)deleteLinkedItemAlertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
 {
-	BOOL success = YES;
 	Item * item = (__bridge Item *)contextInfo;
 	if (returnCode == NSAlertDefaultReturn) {// "Delete"
-		success = [item delete];
+		[item delete];
 	} else {// "Cancel"
 	}
 	
@@ -733,8 +764,8 @@
 {
 	NSInteger section = [self.tableView selectedSection];
 	if (section != -1) {
-		section--;// Remove the "Description" section
-		if (showsIndexDescription || _editing) section--;// Remove the "Notes" section
+		section--; // Remove the "Description" section
+		if (showsIndexDescription || _editing) section--; // Remove the "Notes" section
 		Step * step = steps[section];
 		
 		/* Don't show this alert if no files have been added */
@@ -831,7 +862,7 @@
 											  relativeToURL:nil
 										bookmarkDataIsStale:nil
 													  error:NULL];
-		BOOL success = [fileURL startAccessingSecurityScopedResource];
+		[fileURL startAccessingSecurityScopedResource];
 		[_indexWebView saveIndexAtURL:fileURL];
 		[fileURL stopAccessingSecurityScopedResource];
 #else
@@ -843,7 +874,6 @@
 - (IBAction)showQuickLookAction:(id)sender
 {
 	QLPreviewPanel * previewPanel = [QLPreviewPanel sharedPreviewPanel];
-    
     if ([QLPreviewPanel sharedPreviewPanelExists] && [previewPanel isVisible]) {
         [previewPanel orderOut:nil];
     } else {
@@ -851,48 +881,62 @@
     }
 }
 
+- (void)moveSelectedItemToAnotherStepAction:(NSMenuItem *)sender
+{
+	NSIndexPath * indexPath = [self.tableView indexPathOfSelectedRow];
+	Item * item = [self itemAtIndexPath:indexPath];
+	
+	NSInteger destStepIdentifier = sender.tag;
+	Step * destStep = [Step stepWithIdentifier:(int)destStepIdentifier fromLibrary:[TBLibrary defaultLibrary]];
+	[item moveToStep:destStep];
+	[self reloadData];
+}
+
 #pragma mark Import Actions
 
-- (IBAction)importImageAction:(id)sender
+- (IBAction)importImageAction:(NSMenuItem *)sender
 {
+	if (sender.tag != -1) {
+		_imageImportFormWindow.target = [Step stepWithIdentifier:(int)sender.tag fromLibrary:[TBLibrary defaultLibrary]];
+	}
 	_imageImportFormWindow.importDelegate = self;
-	[NSApp beginSheet:_imageImportFormWindow
-	   modalForWindow:self.view.window
-		modalDelegate:nil
-	   didEndSelector:NULL
-		  contextInfo:NULL];
+	[NSApp beginSheet:_imageImportFormWindow modalForWindow:self.view.window
+		modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
 }
 
-- (IBAction)importURLAction:(id)sender
+- (IBAction)importURLAction:(NSMenuItem *)sender
 {
+	if (sender.tag != -1) {
+		_urlImportFormWindow.target = [Step stepWithIdentifier:(int)sender.tag fromLibrary:[TBLibrary defaultLibrary]];
+	}
 	_urlImportFormWindow.importDelegate = self;
-	[NSApp beginSheet:_urlImportFormWindow
-	   modalForWindow:self.view.window
-		modalDelegate:nil
-	   didEndSelector:NULL
-		  contextInfo:NULL];
+	[NSApp beginSheet:_urlImportFormWindow modalForWindow:self.view.window
+		modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
 }
 
-- (IBAction)importTextAction:(id)sender
+- (IBAction)importTextAction:(NSMenuItem *)sender
 {
+	if (sender.tag != -1) {
+		_textImportFormWindow.target = [Step stepWithIdentifier:(int)sender.tag fromLibrary:[TBLibrary defaultLibrary]];
+	}
 	_textImportFormWindow.importDelegate = self;
-	[NSApp beginSheet:_textImportFormWindow
-	   modalForWindow:self.view.window
-		modalDelegate:nil
-	   didEndSelector:NULL
-		  contextInfo:NULL];
+	[NSApp beginSheet:_textImportFormWindow modalForWindow:self.view.window
+		modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
 }
 
 - (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object
 {
-	/* If an item is selected, add the item after it, else, create a new step */
-	NSIndexPath * indexPath = self.tableView.indexPathOfSelectedRow;
-	Step * step = [self stepForSection:indexPath.section];
+	Step * step = window.target;
+	NSIndexPath * indexPath = nil;
 	if (!step) {
-		step = [[Step alloc] initWithName:[self defaultNewStepName]
-							   description:nil
-								   project:_project
-						 insertIntoLibrary:_project.library];
+		/* If an item is selected, add the item after it, else, create a new step */
+		indexPath = self.tableView.indexPathOfSelectedRow;
+		step = [self stepForSection:indexPath.section];
+		if (!step) {
+			step = [[Step alloc] initWithName:[self defaultNewStepName] description:nil
+								   project:_project];
+			[step insertIntoLibrary:_project.library];
+		}
 	}
 	
 	NSString * destinationPath = [_project.library pathForStepFolder:step];
@@ -906,8 +950,7 @@
 		
 		NSArray * representations = [(NSImage *)object representations];
 		if (representations.count == 0) return ;
-		NSData * data = [representations[0] representationUsingType:NSPNGFileType
-																		properties:nil];
+		NSData * data = [representations[0] representationUsingType:NSPNGFileType properties:nil];
 		[data writeToFile:path atomically:YES];
 		
 	} else if (window == _urlImportFormWindow) {
@@ -927,22 +970,22 @@
 		[data writeToFile:path atomically:YES];
 	}
 	
-	Item * item = [[Item alloc] initWithFilename:filename
-											type:type
-										rowIndex:-1
-											step:step
-							   insertIntoLibrary:_project.library];
+	Item * item = [[Item alloc] initWithFilename:filename type:type
+										rowIndex:-1 identifier:-1 step:step];
+	[item insertIntoLibrary:_project.library];
 	
 	[self reloadData];
 	
-	/* Scroll to the new cell */
-	NSIndexPath * newIndexPath = [NSIndexPath indexPathWithSection:indexPath.section row:(indexPath.row + 1)];
-	[self.tableView scrollToRowAtIndexPath:newIndexPath
-								  position:TableViewPositionNone];
-	[self.tableView selectRowAtIndexPath:newIndexPath];
+	if (indexPath) {
+		/* Scroll to the new cell */
+		NSIndexPath * newIndexPath = [NSIndexPath indexPathWithSection:indexPath.section row:(indexPath.row + 1)];
+		[self.tableView scrollToRowAtIndexPath:newIndexPath
+									  position:TableViewPositionNone];
+		[self.tableView selectRowAtIndexPath:newIndexPath];
+	}
 }
 
-- (IBAction)importFilesAndFoldersAction:(id)sender
+- (IBAction)importFilesAndFoldersAction:(NSMenuItem *)sender
 {
 	NSOpenPanel * openPanel = [NSOpenPanel openPanel];
 	openPanel.allowsMultipleSelection = YES;
@@ -954,21 +997,25 @@
 						  if (result == NSOKButton) {
 							  
 							  Step * step = nil;
-							  NSIndexPath * indexPath = self.tableView.indexPathOfSelectedRow;
-							  if (indexPath && indexPath.section > -1) {
-								  step = [self stepForSection:indexPath.section];
+							  NSIndexPath * indexPath = nil;
+							  if (sender.tag != -1) {
+								  step = [Step stepWithIdentifier:(int)sender.tag fromLibrary:[TBLibrary defaultLibrary]];
 							  } else {
-								  step = [[Step alloc] initWithName:[self defaultNewStepName]
-														 description:nil
-															 project:_project
-												   insertIntoLibrary:_project.library];
+								  indexPath = self.tableView.indexPathOfSelectedRow;
+								  if (indexPath && indexPath.section != NSNotFound) {
+									  step = [self stepForSection:indexPath.section];
+								  } else {
+									  step = [[Step alloc] initWithName:[self defaultNewStepName] description:nil
+																project:_project];
+									  [step insertIntoLibrary:_project.library];
+								  }
 							  }
 							  
 							  NSArray * URLs = [openPanel URLs];
-							  __unsafe_unretained NSMutableArray * paths = [NSMutableArray arrayWithCapacity:URLs.count];
+							  NSMutableArray * paths = [NSMutableArray arrayWithCapacity:URLs.count];
 							  for (NSURL * fileURL in URLs) { [paths addObject:fileURL.path]; }
 							  
-							  int rowIndex = (indexPath)? (int)indexPath.row: -1;
+							  int rowIndex = (indexPath) ? (int)indexPath.row : -1;
 							  NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 							  NSString * defaultDragOp = [userDefaults stringForKey:@"Default-Drag-Operation"];
 							  if (defaultDragOp) {
@@ -977,7 +1024,7 @@
 									  BOOL containsDirectory = NO;
 									  for (NSString * path in paths) {
 										  NSNumber * isDirectory = nil;
-										  [[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
+										  if (path) [[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
 										  if ([isDirectory boolValue]) { containsDirectory = YES; break; }
 									  }
 									  
@@ -992,7 +1039,7 @@
 											  
 										  } else {
 											  
-											  NSAlert * alert = [NSAlert alertWithMessageText:@"Recursive?"
+											  NSAlert * alert = [NSAlert alertWithMessageText:@"Should Tea Box add all files recursively or add only files and folder at the root of this folder?"
 																				defaultButton:@"Non Recursive"
 																			  alternateButton:@"Recursive"
 																				  otherButton:nil
@@ -1049,15 +1096,13 @@
 	if (button.tag == 1234) {
 		Step * step = [[Step alloc] initWithName:[self defaultNewStepName]
 									 description:@""
-										 project:_project
-							   insertIntoLibrary:_project.library];
+										 project:_project];
+		[step insertIntoLibrary:_project.library];
 		
 		NSMutableArray * paths = [NSMutableArray arrayWithCapacity:items.count];
 		for (NSPasteboardItem * item in items) {
-			
-			NSString * path = item.filePath;
-			if (path)
-				[paths addObject:path];
+			if (item.filePath)
+				[paths addObject:item.filePath];
 		}
 		[self moveItemsFromPaths:paths recursive:NO insertIntoStep:step atRowIndex:-1];
 		
@@ -1067,15 +1112,10 @@
 
 - (void)navigationBar:(NavigationBar *)navigationBar didEndDragOnBarButton:(NavigationBarButton *)button
 {
-	NavigationBarButton * backButton = [[NavigationBarButton alloc] initWithType:kNavigationBarButtonTypeBack
-																		  target:self
-																		  action:@selector(backAction:)];
-	_navigationBar.leftBarButton = backButton;
-	
-	NavigationBarButton * editButton = [[NavigationBarButton alloc] initWithTitle:@"Edit"
-																		   target:self
-																		   action:@selector(editAction:)];
-	_navigationBar.rightBarButton = editButton;
+	_navigationBar.leftBarButton = [[NavigationBarButton alloc] initWithType:NavigationBarButtonTypeBack
+																	  target:self action:@selector(backAction:)];
+	_navigationBar.rightBarButton = [[NavigationBarButton alloc] initWithTitle:@"Edit"
+																		target:self action:@selector(editAction:)];
 }
 
 #pragma mark - IndexWebView Delegate -
@@ -1083,8 +1123,8 @@
 - (void)indexWebView:(IndexWebView *)indexWebView didSelectLinkedStepWithName:(NSString *)stepName
 {
 	BOOL founds = NO;
-	NSInteger index = 1;// Begin at "one" for the description section
-	if (showsIndexDescription) index++;// Add a section for the index
+	NSInteger index = 1; // Begin at "one" for the description section
+	if (showsIndexDescription) index++; // Add a section for the index
 	for (Step * step in steps) {
 		if ([stepName isEqualToString:step.name]) {
 			founds = YES; break;
@@ -1122,7 +1162,7 @@
 
 - (void)indexWebView:(IndexWebView *)indexWebView didDragFile:(NSString *)path dragOperation:(NSDragOperation)operation
 {
-	[self saveTextIndexAction:nil];// Save the old index file
+	[self saveTextIndexAction:nil]; // Save the old index file
 	
 #if _SANDBOX_SUPPORTED_
 	NSURL * fileURL = [NSURL fileURLWithPath:path];
@@ -1162,7 +1202,7 @@
 
 - (Step *)stepForSection:(NSInteger)section
 {
-	section--;// Remove the "Description" section
+	section--; // Remove the "Description" section
 	if (showsIndexDescription || _editing) section--;
 	if (0 <= section && section < steps.count)
 		return steps[section];
@@ -1173,6 +1213,21 @@
 - (NSString *)placeholderForTableView:(TableView *)tableView
 {
 	return (itemsArray.count == 0)? @"No Steps" : nil;
+}
+
+- (NSView *)placeholderAccessoryViewForTableView:(TableView *)tableView
+{
+	if (itemsArray.count == 0) {
+		NSButton * createStepButton = [[NSButton alloc] initWithFrame:NSZeroRect];
+		[createStepButton setButtonType:NSMomentaryLightButton];
+		createStepButton.bezelStyle = NSRoundedBezelStyle;
+		createStepButton.target = self;
+		createStepButton.action = @selector(createStepAction:);
+		createStepButton.title = @"Create Step";
+		[createStepButton sizeToFit];
+		return createStepButton;
+	}
+	return nil;
 }
 
 - (NSInteger)numberOfSectionsInTableView:(TableView *)tableView
@@ -1211,7 +1266,7 @@
 - (CGFloat)tableView:(TableView *)tableView rowHeightAtIndex:(NSIndexPath *)indexPath
 {
 	if (indexPath.section == 0)
-		return _descriptionTextField.frame.size.height + (2 * 2.);// Add 2px margin on top and bottom
+		return _descriptionTextField.frame.size.height + (2 * 2.); // Add 2px margin on top and bottom
 	else if (showsIndexDescription && indexPath.section == 1)
 		return indexWebViewHeight;
 	
@@ -1297,19 +1352,19 @@
 				NSMutableAttributedString * mutableString = [[NSMutableAttributedString alloc] initWithString:newPath attributes:nil];
 				
 				NSRange rootPathRange = [newPath rangeOfString:[newPath stringByDeletingLastPathComponent]];
-				rootPathRange.length++;// Add one to the length for the "/" between the root path and the last path component
-				NSDictionary * attributes = @{NSForegroundColorAttributeName: [NSColor grayColor]};
+				rootPathRange.length++; // Add one to the length for the "/" between the root path and the last path component
+				NSDictionary * attributes = @{ NSForegroundColorAttributeName: [NSColor grayColor] };
 				[mutableString setAttributes:attributes range:rootPathRange];
 				[cell.textField.cell setAttributedStringValue:mutableString];
 				
 			} else {
 				NSString * path = [item.library pathForItem:item];
-				cell.title = path.lastPathComponent;
+				cell.title = (path) ? path.lastPathComponent : @"???";
 			}
 			
 			
 #if _SANDBOX_SUPPORTED_
-			[[NSURL fileURLWithPath:path] startAccessingSecurityScopedResource];
+			if (path) [[NSURL fileURLWithPath:path] startAccessingSecurityScopedResource];
 #endif
 			
 			if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
@@ -1317,11 +1372,10 @@
 			}
 			
 #if _SANDBOX_SUPPORTED_
-			[[NSURL fileURLWithPath:path] stopAccessingSecurityScopedResource];
+			if (path) [[NSURL fileURLWithPath:path] stopAccessingSecurityScopedResource];
 #endif
 		}
 		
-		//cell.colorStyle = (indexPath.row % 2)? TableViewCellBackgroundColorStyleGrayGradient : TableViewCellBackgroundColorStyleWhiteGradient;
 		cell.colorStyle = (indexPath.row % 2)? TableViewCellBackgroundColorStyleGray : TableViewCellBackgroundColorStyleWhite;
 		cell.selectedColorStyle = TableViewCellSelectedColorDefaultGradient;
 	}
@@ -1425,6 +1479,19 @@
 	NSMenu * menu = nil;
 	if ((showsIndexDescription && section >= 2) || (!showsIndexDescription && section >= 1)) {
 		menu = [[NSMenu alloc] initWithTitle:@"section-tableView-menu"];
+		
+		Step * step = steps[section - (showsIndexDescription) - 1];
+		NSMenuItem * importItem = [[NSMenuItem alloc] init];
+		importItem.title = @"Import";
+		NSMenu * importSubmenu = [[NSMenu alloc] initWithTitle:@""];
+		[importSubmenu addItemWithTitle:@"Image..." target:self action:@selector(importImageAction:) tag:step.identifier];
+		[importSubmenu addItemWithTitle:@"Web Link..." target:self action:@selector(importURLAction:) tag:step.identifier];
+		[importSubmenu addItemWithTitle:@"Text..." target:self action:@selector(importTextAction:) tag:step.identifier];
+		[importSubmenu addItemWithTitle:@"Files and Folders..." target:self action:@selector(importFilesAndFoldersAction:) tag:step.identifier];
+		importItem.submenu = importSubmenu;
+		[menu addItem:importItem];
+		
+		[menu addItem:[NSMenuItem separatorItem]];
 		[menu addItemWithTitle:@"Delete Step..." target:self action:@selector(deleteSelectedStepAction:)];
 	}
 	return menu;
@@ -1440,7 +1507,7 @@
 		NSString * path = [_project.library pathForItem:item];
 		
 #if _SANDBOX_SUPPORTED_
-		[[NSURL fileURLWithPath:path] startAccessingSecurityScopedResource];
+		if (path) [[NSURL fileURLWithPath:path] startAccessingSecurityScopedResource];
 #endif
 		
 		BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path];
@@ -1477,7 +1544,7 @@
 								target:self
 								action:@selector(openWithDefaultApplicationAction:)];
 			} else {
-				[menu addItemWithTitle:@"No Default Applications" target:self action:NULL];// "NULL" to disable the item
+				[menu addItemWithTitle:@"No Default Applications" target:self action:NULL]; // "NULL" to disable the item
 			}
 			
 			/* Add "Copy .. to Pasteboard" */
@@ -1499,8 +1566,23 @@
 				[menu addItem:[NSMenuItem separatorItem]];
 				[menu addItemWithTitle:@"Export..." target:self action:@selector(exportSelectedItemAction:)];
 			}
+			
+			if (steps.count > 1) { // If we can move to another step
+				[menu addItem:[NSMenuItem separatorItem]];
+				
+				NSMenuItem * moveItem = [[NSMenuItem alloc] init];
+				moveItem.title = @"Move to";
+				NSMenu * moveSubmenu = [[NSMenu alloc] initWithTitle:@""];
+				for (Step * step in steps) {
+					if (step.identifier != item.step.identifier) {
+						[moveSubmenu addItemWithTitle:step.name target:self action:@selector(moveSelectedItemToAnotherStepAction:) tag:step.identifier];
+					}
+				}
+				moveItem.submenu = moveSubmenu;
+				[menu addItem:moveItem];
+			}
 		} else {
-			[menu addItemWithTitle:@"File not Found" target:self action:NULL];// "NULL" to disable the item
+			[menu addItemWithTitle:@"File not Found" target:self action:NULL]; // "NULL" to disable the item
 			
 			/* Add a "Locate..." item to let the user select the new location of the file */
 			[menu addItemWithTitle:@"Locate..." target:self action:@selector(locateSelectedItemAction:)];
@@ -1510,7 +1592,7 @@
 		[menu addItemWithTitle:@"Delete..." target:self action:@selector(deleteSelectedItemAction:)];
 		
 #if _SANDBOX_SUPPORTED_
-		[[NSURL fileURLWithPath:path] stopAccessingSecurityScopedResource];
+		if (path) [[NSURL fileURLWithPath:path] stopAccessingSecurityScopedResource];
 #endif
 		
 		return menu;
@@ -1522,13 +1604,12 @@
 
 - (BOOL)tableView:(TableView *)tableView allowsDragOnSection:(NSInteger)section
 {
-	return (section > 0);// Don't allow drag&Drop for the "Description" section and if no sections are selected
-
+	return (section > 0); // Don't allow drag&Drop for the "Description" section and if no sections are selected
 }
 
 - (BOOL)tableView:(TableView *)tableView allowsDragOnCellAtIndexPath:(NSIndexPath *)indexPath
 {
-	return (indexPath.section > 0);// Don't allow drag&Drop for the "Description" section and if no sections are selected
+	return (indexPath.section > 0); // Don't allow drag&Drop for the "Description" section and if no sections are selected
 }
 
 - (BOOL)tableView:(TableView *)tableView shouldDragItems:(NSArray *)pasteboardItems atIndexPath:(NSIndexPath *)indexPath
@@ -1541,9 +1622,7 @@
 			
 			NSString * path = [(NSPasteboardItem *)pasteboardItems[0] filePath];
 			if (path) {
-				NSString * contentString = [[NSString alloc] initWithContentsOfFile:path
-																		usedEncoding:nil
-																			   error:NULL];
+				NSString * contentString = [[NSString alloc] initWithContentsOfFile:path usedEncoding:nil error:NULL];
 				return (contentString.length > 0);
 			} else {
 				return NO;
@@ -1573,7 +1652,7 @@
 	
 	if (volumeURL) {
 		if (volumeURL.path.length == 1) {// If the path is on system volume (volume equals to "/")
-			if (proposedDragOp != NSDragOperationCopy && proposedDragOp != NSDragOperationLink & proposedDragOp != NSDragOperationGeneric) {
+			if (proposedDragOp != NSDragOperationCopy && proposedDragOp != NSDragOperationLink && proposedDragOp != NSDragOperationGeneric) {
 				NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 				NSString * defaultDragOp = [userDefaults stringForKey:@"Default-Drag-Operation"];
 				if (defaultDragOp) {// If we have a default drag operation
@@ -1597,7 +1676,7 @@
 			
 			NSString * path = [(NSPasteboardItem *)pasteboardItems[0] filePath];
 			if (path) {
-				[self saveTextIndexAction:nil];// Save the old index file
+				[self saveTextIndexAction:nil]; // Save the old index file
 				[_project updateValue:path forKey:@"indexPath"];
 				
 #if _SANDBOX_SUPPORTED_
@@ -1613,7 +1692,7 @@
 				[_indexWebView loadIndexAtURL:fileURL];
 				[fileURL stopAccessingSecurityScopedResource];
 #else
-				[_indexWebView loadIndexAtPath:path];// Reload the webView with the new index file
+				[_indexWebView loadIndexAtPath:path]; // Reload the webView with the new index file
 #endif
 			}
 		}
@@ -1691,7 +1770,7 @@
 				
 				BOOL isDirectory, isBundle, isPackage;
 				[[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
-				[[NSURL fileURLWithPath:path] fileIsBundle:&isBundle isPackage:&isPackage];
+				if (path) [[NSURL fileURLWithPath:path] fileIsBundle:&isBundle isPackage:&isPackage];
 				itemType = (isDirectory && !isBundle && !isPackage)? kItemTypeFolder: kItemTypeFile;
 				
 			} else {
@@ -1705,8 +1784,9 @@
 					Item * item = [[Item alloc] initWithFilename:[path lastPathComponent]
 															type:itemType
 														rowIndex:(int)indexPath.row
-															step:step
-											   insertIntoLibrary:_project.library];
+													  identifier:-1
+															step:step];
+					[item insertIntoLibrary:_project.library];
 				}
 			}
 			
@@ -1745,7 +1825,7 @@
 				BOOL containsDirectory = NO;
 				for (NSString * path in paths) {
 					NSNumber * isDirectory = nil;
-					[[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
+					if (path) [[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
 					if ([isDirectory boolValue]) {
 						containsDirectory = YES;
 						break;
@@ -1830,14 +1910,14 @@
 																				 options:(NSDirectoryEnumerationSkipsSubdirectoryDescendants | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsHiddenFiles)
 																			errorHandler:^BOOL(NSURL *url, NSError *error) {
 																				NSLog(@"error: %@", [error localizedDescription]);
-																				return YES;// Return "YES" to continue enumeration of error
+																				return YES; // Return "YES" to continue enumeration of error
 																			}];
 	/* Create a step from the directory at "path" */
 	NSString * name = [NSString stringWithFormat:@"Step with folder named \"%@\"", [path lastPathComponent]];
 	Step * step = [[Step alloc] initWithName:name
 								 description:nil
-									 project:_project
-						   insertIntoLibrary:_project.library];
+									 project:_project];
+	[step insertIntoLibrary:_project.library];
 	
 	for (NSURL * fileURL in enumerator) {
 		
@@ -1858,17 +1938,17 @@
 				Item * item = [[Item alloc] initWithFilename:newFilename
 														type:@"FOLD"
 													rowIndex:-1
-														step:step
-										   insertIntoLibrary:_project.library];
+												  identifier:-1
+														step:step];
+				[item insertIntoLibrary:_project.library];
 			}
 			
 		} else {
 			/* Create en Item with the file at "path" */
 			Item * item = [[Item alloc] initWithFilename:newFilename
 													type:kItemTypeFile
-												rowIndex:-1
-													step:step
-									   insertIntoLibrary:_project.library];
+													step:step];
+			[item insertIntoLibrary:_project.library];
 		}
 	}
 	
@@ -1885,11 +1965,14 @@
 	NSFileManager * manager = [[NSFileManager alloc] init];
 	
 	/* Items are inserted into the database with a reverse order because items are inserted at the same index so the first item will be inserted after the second item (the "rowIndex" of the first item will be greater than the "rowIndex" of the second item) */
-	for (NSString * path in [paths reverseObjectEnumerator]) {
+	for (NSString * path in paths.reverseObjectEnumerator) {
 		NSNumber * isDirectory = nil;
-		// @TODO: get error and do smtg with it
 		BOOL success = [[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
-		if (isDirectory.boolValue) {// Directories
+		if (!success) {
+			// @TODO: get error and do smtg with it
+			return ;
+		}
+		if (isDirectory.boolValue) { // Directories
 			
 			[self copyDirectoryContentAtPath:path
 								   recursive:recursive];
@@ -1929,12 +2012,11 @@
 							  Item * item = [[Item alloc] initWithFilename:itemNewFilename
 																	  type:kItemTypeFile
 																  rowIndex:itemRowIndex
-																	  step:itemStep
-														 insertIntoLibrary:_project.library];
+																identifier:-1
+																	  step:itemStep];
+							  [item insertIntoLibrary:_project.library];
 						  }
-							   errorHandler:^(NSError *error) {
-								   [NSApp presentError:error];
-							   }];
+							   errorHandler:^(NSError *error) { [NSApp presentError:error]; }];
 				} else {
 					NSError * error = nil;
 					BOOL success = [manager copyItemAtPath:path
@@ -1947,8 +2029,9 @@
 						Item * item = [[Item alloc] initWithFilename:newFilename
 																type:kItemTypeFile
 															rowIndex:rowIndex
-																step:step
-												   insertIntoLibrary:_project.library];
+														  identifier:-1
+																step:step];
+						[item insertIntoLibrary:_project.library];
 					}
 				}
 			}
@@ -1976,11 +2059,12 @@
 		NSString * itemType = ([isDirectory boolValue] && !isBundle && !isPackage)? kItemTypeFolder: kItemTypeFile;
 		
 		
-		Item * item = [[Item alloc] initWithFilename:nil// Pass nil as filename
+		Item * item = [[Item alloc] initWithFilename:nil // Pass nil as filename
 												type:itemType
 											rowIndex:(int)rowIndex
-												step:step
-								   insertIntoLibrary:_project.library];
+										  identifier:-1
+												step:step];
+		[item insertIntoLibrary:_project.library];
 		
 		NSURLBookmarkCreationOptions bookmarkOptions = 0;
 #if _SANDBOX_SUPPORTED_
@@ -1995,7 +2079,7 @@
 			NSLog(@"error: %@", [error localizedDescription]);
 		
 		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-		NSString * key = [NSString stringWithFormat:@"%i/%i/%i", step.project.identifier, step.identifier, item.identifier];// The key looks like "{Project ID}/{Step ID}/{Item ID}"
+		NSString * key = [NSString stringWithFormat:@"%i/%i/%i", step.project.identifier, step.identifier, item.identifier]; // The key looks like "{Project ID}/{Step ID}/{Item ID}"
 		[userDefaults setObject:bookmarkData forKey:key];
 		
 	}
@@ -2012,10 +2096,13 @@
 	NSFileManager * manager = [[NSFileManager alloc] init];
 	
 	/* Items are inserted into the database with a reverse order because items are inserted at the same index so the first item will be inserted after the second item (the "rowIndex" of the first item will be greater than the "rowIndex" of the second item) */
-	for (NSString * path in [paths reverseObjectEnumerator]) {
+	for (NSString * path in paths.reverseObjectEnumerator) {
 		NSNumber * isDirectory = nil;
-		// @TODO: get error and do smtg with it
 		BOOL success = [[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
+		if (!success) {
+			// @TODO: get error and do smtg with it
+			return ;
+		}
 		if (isDirectory.boolValue) {// Directories
 			[self copyDirectoryContentAtPath:path
 								   recursive:recursive];
@@ -2047,8 +2134,9 @@
 					Item * item = [[Item alloc] initWithFilename:newFilename
 															type:kItemTypeFile
 														rowIndex:rowIndex
-															step:step
-											   insertIntoLibrary:_project.library];
+													  identifier:-1
+															step:step];
+					[item insertIntoLibrary:_project.library];
 				}
 			}
 		}
@@ -2116,7 +2204,7 @@
 	TableViewCell * cell = [self.tableView cellAtIndexPath:indexPath];
 	NSPoint position = [self.tableView convertLocationFromWindow:cell.frame.origin];
 	NSRect frame = cell.frame;
-	frame.origin = [self.view.window convertBaseToScreen:position];
+	frame.origin = NSMakePoint(position.x + self.view.window.frame.origin.x + 10., position.y + self.view.window.frame.origin.y - 20.);
 	frame.size = CGSizeMake(20., 20.);
 	return frame;
 }

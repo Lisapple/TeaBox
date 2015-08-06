@@ -48,8 +48,10 @@ enum _MainMenuItemTag {
 
 - (IBAction)openPreferencesAction:(id)sender;
 
+/*
 - (void)startBrowsingSharedProjects;
 - (void)startPublishingSharedProjects;
+*/
 
 - (IBAction)makeMainWindowKey:(id)sender;
 - (IBAction)showAboutWindowAction:(id)sender;

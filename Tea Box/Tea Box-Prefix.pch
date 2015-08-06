@@ -9,6 +9,9 @@
 #include <sqlite3.h>
 
 //#define __DEBUG__ 0
-#define _SANDBOX_SUPPORTED_ 1
+#define _SANDBOX_SUPPORTED_ 0
+#if (!_SANDBOX_SUPPORTED_)
+#  warning Sandbox is marked as not supported
+#endif
 
 #define kMaxTransmissionUnit 7981 // 7981 for WLAN, 1500 for Eternet

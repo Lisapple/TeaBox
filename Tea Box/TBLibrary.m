@@ -27,6 +27,7 @@ static NSMutableDictionary * _libraries = nil;
 		
 		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 		
+		NSURL * fileURL = nil;
 		NSString * path = nil;
 		NSData * bookmarkData = [userDefaults objectForKey:kLibraryBookmarkDataKey];
 		if (bookmarkData) {
@@ -35,7 +36,7 @@ static NSMutableDictionary * _libraries = nil;
 #if _SANDBOX_SUPPORTED_
 			bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
 #endif
-			NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
+			fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
 														options:bookmarkOptions
 												  relativeToURL:nil
 											bookmarkDataIsStale:NULL
@@ -51,9 +52,16 @@ static NSMutableDictionary * _libraries = nil;
 			path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 		}
 		
+#if _SANDBOX_SUPPORTED_
+		[fileURL startAccessingSecurityScopedResource];
+#endif
 		// @TODO: observe userDefaults to catch path of default library changes
 		TBLibrary * defaultLibrary = [[TBLibrary alloc] initWithPath:path isSharedLibrary:NO];
 		if (defaultLibrary) _libraries[@"com.lisacintosh.teabox.default-library"] = defaultLibrary;
+		
+#if _SANDBOX_SUPPORTED_
+		[fileURL stopAccessingSecurityScopedResource];
+#endif
 		
 		initialized = YES;
 	}
@@ -85,7 +93,7 @@ sqlite3 * init_db(const char path[])
 	int err = sqlite3_open_v2(path, &_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
 	
 	if (err != SQLITE_OK) {
-		printf("error on creating/openning the database at path: %s", path);
+		printf("error on creating/openning the database at path: \"%s\" (err code %d).", path, err);
 		sqlite3_close(_db);
 		return NULL;
 	}
@@ -93,7 +101,7 @@ sqlite3 * init_db(const char path[])
 	return _db;
 }
 
-- (id)initWithPath:(NSString *)path isSharedLibrary:(BOOL)shared
+- (instancetype)initWithPath:(NSString *)path isSharedLibrary:(BOOL)shared
 {
 	if ((self = [super init])) {
 		self.path = path;
@@ -117,7 +125,7 @@ sqlite3 * init_db(const char path[])
 			if (!success)
 				[NSApp presentError:error];
 		}
-		database = init_db([self.databasePath UTF8String]);// @TODO: create a method to close and release "database"
+		database = init_db([self.databasePath UTF8String]); // @TODO: create a method to close and release "database"
 	}
 	return self;
 }
@@ -132,7 +140,7 @@ sqlite3 * init_db(const char path[])
 - (int)createSavepoint
 {
 	static int identifier = 0;
-	identifier++;// start at "savepoint_1"
+	identifier++; // start at "savepoint_1"
 	NSString * sql = [NSString stringWithFormat:@"SAVEPOINT savepoint_%i", identifier];
 	
 	int err = sqlite3_exec(self.database, [sql UTF8String], NULL, NULL, NULL);
@@ -178,10 +186,10 @@ sqlite3 * init_db(const char path[])
 	sqlite3_backup * backup = sqlite3_backup_init(backup_db, "main", self.database, "main");
 	if (!backup) return NO;
 	
-	err += sqlite3_backup_step(backup, -1);// Copy all pages
+	err += sqlite3_backup_step(backup, -1); // Copy all pages
 	err += sqlite3_backup_finish(backup);
 	
-	return (err = 0);
+	return (err == 0);
 }
 
 - (BOOL)revertToBackup
@@ -208,7 +216,35 @@ sqlite3 * init_db(const char path[])
 
 - (BOOL)moveLibraryToPath:(NSString *)newPath error:(NSError **)error
 {
-	BOOL success = [[NSFileManager defaultManager] moveItemAtPath:_path toPath:newPath error:error];
+	NSURL * fileURL = nil;
+	NSString * path = nil;
+	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+	NSData * bookmarkData = [userDefaults objectForKey:kLibraryBookmarkDataKey];
+	if (bookmarkData) {
+		
+		NSURLBookmarkResolutionOptions bookmarkOptions = 0;
+#if _SANDBOX_SUPPORTED_
+		bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
+#endif
+		fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
+											options:bookmarkOptions
+									  relativeToURL:nil
+								bookmarkDataIsStale:NULL
+											  error:NULL];
+		path = [fileURL path];
+	} else {
+		path = [userDefaults stringForKey:kDefaultLibraryKey];
+	}
+	
+#if _SANDBOX_SUPPORTED_
+	[fileURL startAccessingSecurityScopedResource];
+#endif
+	
+	BOOL success = [[NSFileManager defaultManager] moveItemAtPath:path toPath:newPath error:error];
+	
+#if _SANDBOX_SUPPORTED_
+	[fileURL stopAccessingSecurityScopedResource];
+#endif
 	
 	if (success) {
 		_path = newPath;
@@ -223,7 +259,7 @@ sqlite3 * init_db(const char path[])
 		NSError * error = nil;
 		NSData * bookmarkData = [fileURL bookmarkDataWithOptions:bookmarkOptions
 								  includingResourceValuesForKeys:nil
-												   relativeToURL:nil// Use nil for app-scoped bookmark
+												   relativeToURL:nil // Use nil for app-scoped bookmark
 														   error:&error];
 		
 		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
@@ -233,9 +269,8 @@ sqlite3 * init_db(const char path[])
 			[userDefaults removeObjectForKey:kLibraryBookmarkDataKey];
 		
 		if (database) {
-			sqlite3_close(database);
+			sqlite3_close_v2(database); // Close (force even when busy) and release the database
 			database = NULL;
-			// @TODO: maybe release "database"?
 		}
 		database = init_db([_databasePath UTF8String]);
 	}
@@ -258,10 +293,9 @@ sqlite3 * init_db(const char path[])
 	NSFileManager * manager = [[NSFileManager alloc] init];
 	if (![manager fileExistsAtPath:path]) {
 		folderName = nil;
+		NSDirectoryEnumerationOptions options = (NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsSubdirectoryDescendants);
 		NSDirectoryEnumerator * enumerator = [manager enumeratorAtURL:[NSURL fileURLWithPath:parentFolderPath]
-										   includingPropertiesForKeys:nil
-															  options:(NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsSubdirectoryDescendants)
-														 errorHandler:NULL];
+										   includingPropertiesForKeys:nil options:options errorHandler:NULL];
 		BOOL folderExists = NO;
 		int length = (int)ceil(log10(project.identifier));
 		for (NSURL * fileURL in enumerator) {
@@ -280,10 +314,7 @@ sqlite3 * init_db(const char path[])
 		}
 		
 		if (!folderExists) {
-			[manager createDirectoryAtPath:path
-			   withIntermediateDirectories:YES
-								attributes:nil
-									 error:NULL];
+			[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
 		}
 	}
 	
@@ -321,38 +352,14 @@ sqlite3 * init_db(const char path[])
 		}
 		
 		if (!folderExists) {
-			[manager createDirectoryAtPath:path
-			   withIntermediateDirectories:YES
-								attributes:nil
-									 error:NULL];
+			[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
 		}
 	}
 	
 	return path;
 }
 
-/* The returned path looks like "{Path to library}/{Library name}.teaboxdb/Projects/{Project id} - {Project name}/{Step id} - {Step name}/{filename}.{extension}" */
-- (NSString *)pathForItem:(Item *)item
-{
-	if (item.filename) {// If we have a filename from "item", the file is into the library, return the path with this filename
-		return [NSString stringWithFormat:@"%@/%@", [self pathForStepFolder:item.step], item.filename];
-	} else {
-		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-		NSString * key = [NSString stringWithFormat:@"%i/%i/%i", item.step.project.identifier, item.step.identifier, item.identifier];
-		NSData * bookmarkData = [userDefaults dataForKey:key];
-		
-		NSURLBookmarkResolutionOptions bookmarkOptions = 0;
-#if _SANDBOX_SUPPORTED_
-		bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
-#endif
-		return [[NSURL URLByResolvingBookmarkData:bookmarkData
-										  options:bookmarkOptions
-									relativeToURL:nil// Use nil for app-scoped bookmark
-							  bookmarkDataIsStale:nil
-											error:NULL] path];
-	}
-}
-
+/* The returned URL looks like "{Path to library}/{Library name}.teaboxdb/Projects/{Project id} - {Project name}/{Step id} - {Step name}/{filename}.{extension}" */
 - (NSURL *)URLForItem:(Item *)item
 {
 	if (item.filename) {// If we have a filename from "item", the file is into the library, return the path with this filename
@@ -366,15 +373,19 @@ sqlite3 * init_db(const char path[])
 #if _SANDBOX_SUPPORTED_
 		bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
 #endif
-		BOOL isStale;
 		NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
 										  options:bookmarkOptions
-									relativeToURL:nil// Use nil for app-scoped bookmark
-							  bookmarkDataIsStale:&isStale
+									relativeToURL:nil // Use nil for app-scoped bookmark
+							  bookmarkDataIsStale:NULL
 											error:NULL];
 		
 		return fileURL;
 	}
+}
+
+- (NSString *)pathForItem:(Item *)item
+{
+	return [self URLForItem:item].path;
 }
 
 @end

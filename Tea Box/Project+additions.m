@@ -19,11 +19,20 @@
 - (BOOL)moveToTrash
 {
 	NSString * path = [self.library pathForProjectFolder:self];
-	const char * folderPath = [path UTF8String];
-	char * targetPath = NULL;
-	FSPathMoveObjectToTrashSync(folderPath, &targetPath, 0);
+	NSFileManager * fileManager = [NSFileManager defaultManager];
+	BOOL moved = NO;
+	if ([fileManager respondsToSelector:@selector(trashItemAtURL:resultingItemURL:error:)]) { // OSX.8+
+		moved = (BOOL)[fileManager trashItemAtURL:[NSURL fileURLWithPath:path] resultingItemURL:nil error:nil];
+	} else {
+		const char * sourcePath = path.UTF8String;
+		char * targetPath = NULL;
+		OSStatus error = FSPathMoveObjectToTrashSync(sourcePath, &targetPath, kFSFileOperationDefaultOptions);
+		moved = (targetPath != NULL);
+		
+		if (!moved) NSLog(@"move to trash fails for %@ (%d)", path, error);
+	}
 	
-	return (targetPath != NULL);
+	return moved;
 }
 
 

@@ -8,8 +8,6 @@
 
 #import "AppDelegate.h"
 
-#import "JSONKit.h"
-
 #define kServiceName @"_teabox._tcp."
 
 @implementation AppDelegate
@@ -71,7 +69,7 @@
 																		 error:NULL];
 				if (bookmarkData) {
 					NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-					[userDefaults objectForKey:kLibraryBookmarkDataKey];
+					[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
 				} else {
 					// @TODO: present the error on fail
 				}
@@ -135,8 +133,8 @@
 	if (!registered)
 		NSLog(@"help not registered!");
 	
-	[self startBrowsingSharedProjects];
-	[self startPublishingSharedProjects];
+	//[self startBrowsingSharedProjects];
+	//[self startPublishingSharedProjects];
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag

@@ -10,7 +10,7 @@
 
 @interface Item (additions)
 
-- (BOOL)moveToPath:(NSString *)path;
+//- (BOOL)moveToPath:(NSString *)path;
 - (BOOL)moveToTrash;
 
 @end

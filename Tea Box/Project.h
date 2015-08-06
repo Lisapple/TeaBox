@@ -18,7 +18,7 @@
 
 @property (nonatomic, strong) NSString * name;
 @property (nonatomic, strong) NSString * description;
-@property (nonatomic, strong) NSString * indexPath;// The path of the index text file
+@property (nonatomic, strong) NSString * indexPath; // The path of the index text file
 @property (unsafe_unretained, nonatomic, readonly) NSDate * creationDate;
 @property (nonatomic, strong) NSDate * lastModificationDate;
 @property (nonatomic, strong) TBLibrary * library;
@@ -28,8 +28,8 @@
 + (NSArray *)allProjectsFromLibrary:(TBLibrary *)library;
 + (Project *)projectWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library;
 
-- (id)initWithName:(NSString *)name description:(NSString *)description priority:(int)priority insertIntoLibrary:(TBLibrary *)library;
-- (id)initWithName:(NSString *)name description:(NSString *)description priority:(int)priority identifier:(int)projectID insertIntoLibrary:(TBLibrary *)library;
+- (instancetype)initWithName:(NSString *)name description:(NSString *)description priority:(int)priority identifier:(int)identifier NS_DESIGNATED_INITIALIZER;
+- (BOOL)insertIntoLibrary:(TBLibrary *)library;
 
 - (void)update;
 
@@ -41,6 +41,6 @@
 - (BOOL)delete;
 
 // Private
-- (id)initWithCreationDate:(NSDate *)creationDate;
+- (instancetype)initWithCreationDate:(NSDate *)creationDate NS_DESIGNATED_INITIALIZER;
 
 @end

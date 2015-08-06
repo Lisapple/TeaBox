@@ -33,9 +33,7 @@
 	NSArray * priorityNames;
 }
 
-@property (unsafe_unretained) IBOutlet NavigationBar * navigationBar;
 @property (unsafe_unretained) IBOutlet TableView * tableView;
-@property (unsafe_unretained) IBOutlet NSTextField * bottomLabel;
 
 - (void)reloadData;
 

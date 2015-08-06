@@ -28,7 +28,7 @@
 + (TBLibrary *)createLibraryWithName:(NSString *)name atPath:(NSString *)path isSharedLibrary:(BOOL)shared;
 + (TBLibrary *)libraryWithName:(NSString *)name;
 
-- (id)initWithPath:(NSString *)path isSharedLibrary:(BOOL)shared;
+- (instancetype)initWithPath:(NSString *)path isSharedLibrary:(BOOL)shared NS_DESIGNATED_INITIALIZER;
 - (sqlite3 *)database;
 - (void)close;
 
