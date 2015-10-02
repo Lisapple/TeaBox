@@ -7,6 +7,7 @@
 //
 
 #import "MainViewController.h"
+#import "SheetWindow.h"
 
 #import "NSIndexPath+additions.h"
 #import "NSMenu+additions.h"
@@ -17,7 +18,7 @@
 @property (unsafe_unretained) IBOutlet NavigationBar * navigationBar;
 @property (unsafe_unretained) IBOutlet NSTextField * bottomLabel;
 
-@property (unsafe_unretained) IBOutlet NSWindow * createProjectWindow;
+@property (unsafe_unretained) IBOutlet SheetWindow * createProjectWindow;
 @property (unsafe_unretained) IBOutlet NSTextField * createProjectLabel, * createProjectField;
 @property (unsafe_unretained) IBOutlet NSButton * createProjectOKButton;
 
@@ -60,10 +61,9 @@
 	
 	[_navigationBar.rightBarButton registerForDraggedTypes:@[NSFilenamesPboardType]]; // Add others types of dragging item
 	
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(reloadData)
-												 name:@"ReloadTableViewNotification"
-											   object:nil];
+	[[NSNotificationCenter defaultCenter] addObserverForName:NSControlTextDidChangeNotification
+												  usingBlock:^(NSNotification *notification) {
+		_createProjectOKButton.enabled = (_createProjectField.stringValue.length > 0); }];
     
     [NavigationController addDelegate:self];
 }
@@ -255,7 +255,6 @@
 	if (success)
 		[aProjet delete];
 	else {
-		NSLog(@"Project deleting fails!");
 		NSAlert * alert = [NSAlert alertWithMessageText:@"Error when moving folder to trash"
 										  defaultButton:@"OK"
 										alternateButton:nil
@@ -345,7 +344,7 @@
 {
 	NSInteger section = indexPath.section - sharedHostNames.count;
 	Project * project = ((NSArray *)arrayOfProjects[section])[indexPath.row];
-	ProjectViewController * projectViewController = [[NSApp delegate] projectViewController];
+	ProjectViewController * projectViewController = [(AppDelegate *)NSApp.delegate projectViewController];
 	projectViewController.project = project;
 	[NavigationController pushViewController:projectViewController animated:YES];
 }

@@ -29,7 +29,7 @@
 + (TBLibrary *)libraryWithName:(NSString *)name;
 
 - (instancetype)initWithPath:(NSString *)path isSharedLibrary:(BOOL)shared NS_DESIGNATED_INITIALIZER;
-- (sqlite3 *)database;
+- (sqlite3 *)database NS_RETURNS_INNER_POINTER;
 - (void)close;
 
 - (int)createSavepoint;

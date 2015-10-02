@@ -16,19 +16,19 @@
 @synthesize path = _path, databasePath = _databasePath;
 @synthesize shared = _shared;
 
-static NSMutableDictionary * _libraries = nil;
+static NSMutableDictionary * _libraries = nil; // Node: Actually, only one library is supported
 
 + (void)initialize
 {
-	static BOOL initialized = NO;
-	if (!initialized) {
+	if (!_libraries) {
 		
 		_libraries = [[NSMutableDictionary alloc] initWithCapacity:3];
 		
-		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-		
 		NSURL * fileURL = nil;
 		NSString * path = nil;
+		
+		// Look for existing bookmark data
+		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 		NSData * bookmarkData = [userDefaults objectForKey:kLibraryBookmarkDataKey];
 		if (bookmarkData) {
 			
@@ -37,18 +37,16 @@ static NSMutableDictionary * _libraries = nil;
 			bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
 #endif
 			fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
-														options:bookmarkOptions
-												  relativeToURL:nil
-											bookmarkDataIsStale:NULL
-														  error:NULL];
-			path = [fileURL path];
-		} else {
-			path = [userDefaults stringForKey:kDefaultLibraryKey];
+												options:bookmarkOptions
+										  relativeToURL:nil
+									bookmarkDataIsStale:NULL
+												  error:NULL];
+			path = fileURL.path;
 		}
 		
-		if (!path) {
+		if (!path) { // If no bookmark data, look at "~/Document/Library.teaboxdb" (in sandbox container)
 			NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-			NSString * documentPath = ([documentPaths count] > 0) ? documentPaths[0] : NSTemporaryDirectory();
+			NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
 			path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 		}
 		
@@ -56,14 +54,15 @@ static NSMutableDictionary * _libraries = nil;
 		[fileURL startAccessingSecurityScopedResource];
 #endif
 		// @TODO: observe userDefaults to catch path of default library changes
-		TBLibrary * defaultLibrary = [[TBLibrary alloc] initWithPath:path isSharedLibrary:NO];
-		if (defaultLibrary) _libraries[@"com.lisacintosh.teabox.default-library"] = defaultLibrary;
+		
+		if ([[NSFileManager defaultManager] fileExistsAtPath:path]) { // Don't create library, just load it if existing
+			TBLibrary * defaultLibrary = [[TBLibrary alloc] initWithPath:path isSharedLibrary:NO];
+			if (defaultLibrary) _libraries[@"com.lisacintosh.teabox.default-library"] = defaultLibrary;
+		}
 		
 #if _SANDBOX_SUPPORTED_
 		[fileURL stopAccessingSecurityScopedResource];
 #endif
-		
-		initialized = YES;
 	}
 }
 
@@ -75,7 +74,7 @@ static NSMutableDictionary * _libraries = nil;
 + (TBLibrary *)createLibraryWithName:(NSString *)name atPath:(NSString *)path isSharedLibrary:(BOOL)shared
 {
 	TBLibrary * library = [[TBLibrary alloc] initWithPath:path isSharedLibrary:shared];
-	if (library) [_libraries setValue:library forKey:name];
+	if (library) _libraries[name] = library;
 	return library;
 }
 
@@ -125,7 +124,7 @@ sqlite3 * init_db(const char path[])
 			if (!success)
 				[NSApp presentError:error];
 		}
-		database = init_db([self.databasePath UTF8String]); // @TODO: create a method to close and release "database"
+		database = init_db(self.databasePath.UTF8String); // @TODO: create a method to close and release "database"
 	}
 	return self;
 }
@@ -143,7 +142,7 @@ sqlite3 * init_db(const char path[])
 	identifier++; // start at "savepoint_1"
 	NSString * sql = [NSString stringWithFormat:@"SAVEPOINT savepoint_%i", identifier];
 	
-	int err = sqlite3_exec(self.database, [sql UTF8String], NULL, NULL, NULL);
+	int err = sqlite3_exec(self.database, sql.UTF8String, NULL, NULL, NULL);
 	if (err != SQLITE_OK)
 		return -1;
 	
@@ -154,7 +153,7 @@ sqlite3 * init_db(const char path[])
 {
 	NSString * sql = [NSString stringWithFormat:@"RELEASE savepoint_%i", identifier];
 	
-	int err = sqlite3_exec(self.database, [sql UTF8String], NULL, NULL, NULL);
+	int err = sqlite3_exec(self.database, sql.UTF8String, NULL, NULL, NULL);
 	if (err != SQLITE_OK)
 		return NO;
 	
@@ -165,7 +164,7 @@ sqlite3 * init_db(const char path[])
 {
 	NSString * sql = [NSString stringWithFormat:@"ROLLBACK TO savepoint_%i", identifier];
 	
-	int err = sqlite3_exec(self.database, [sql UTF8String], NULL, NULL, NULL);
+	int err = sqlite3_exec(self.database, sql.UTF8String, NULL, NULL, NULL);
 	if (err != SQLITE_OK)
 		return NO;
 	
@@ -180,7 +179,7 @@ sqlite3 * init_db(const char path[])
 	
 	sqlite3_initialize();
 	sqlite3 * backup_db = NULL;
-	const char * path = [[NSString stringWithFormat:@"%@/%s", self.path, kBackupName] UTF8String];
+	const char * path = [NSString stringWithFormat:@"%@/%s", self.path, kBackupName].UTF8String;
 	int err = sqlite3_open_v2(path, &backup_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
 	
 	sqlite3_backup * backup = sqlite3_backup_init(backup_db, "main", self.database, "main");
@@ -231,9 +230,7 @@ sqlite3 * init_db(const char path[])
 									  relativeToURL:nil
 								bookmarkDataIsStale:NULL
 											  error:NULL];
-		path = [fileURL path];
-	} else {
-		path = [userDefaults stringForKey:kDefaultLibraryKey];
+		path = fileURL.path;
 	}
 	
 #if _SANDBOX_SUPPORTED_
@@ -272,7 +269,7 @@ sqlite3 * init_db(const char path[])
 			sqlite3_close_v2(database); // Close (force even when busy) and release the database
 			database = NULL;
 		}
-		database = init_db([_databasePath UTF8String]);
+		database = init_db(_databasePath.UTF8String);
 	}
 	
 	return success;
@@ -299,14 +296,12 @@ sqlite3 * init_db(const char path[])
 		BOOL folderExists = NO;
 		int length = (int)ceil(log10(project.identifier));
 		for (NSURL * fileURL in enumerator) {
-			NSString * filename = [[fileURL path] lastPathComponent];
+			NSString * filename = fileURL.path.lastPathComponent;
 			if (filename.length > (length + 1)) {
 				int folderID = 0;
 				if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == project.identifier) {
 					/* Rename the folder with the new name */
-					[manager moveItemAtPath:[fileURL path]
-									 toPath:path
-									  error:NULL];
+					[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
 					folderExists = YES;
 					break;
 				}
@@ -337,14 +332,12 @@ sqlite3 * init_db(const char path[])
 		BOOL folderExists = NO;
 		int length = (int)ceil(log10(step.identifier));
 		for (NSURL * fileURL in enumerator) {
-			NSString * filename = [[fileURL path] lastPathComponent];
+			NSString * filename = fileURL.path.lastPathComponent;
 			if (filename.length > (length + 1)) {
 				int folderID = 0;
 				if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == step.identifier) {
 					/* Rename the folder with the new name */
-					[manager moveItemAtPath:[fileURL path]
-									 toPath:path
-									  error:NULL];
+					[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
 					folderExists = YES;
 					break;
 				}
@@ -373,13 +366,11 @@ sqlite3 * init_db(const char path[])
 #if _SANDBOX_SUPPORTED_
 		bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
 #endif
-		NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
-										  options:bookmarkOptions
-									relativeToURL:nil // Use nil for app-scoped bookmark
-							  bookmarkDataIsStale:NULL
-											error:NULL];
-		
-		return fileURL;
+		return [NSURL URLByResolvingBookmarkData:bookmarkData
+										 options:bookmarkOptions
+								   relativeToURL:nil // Use nil for app-scoped bookmark
+							 bookmarkDataIsStale:NULL
+										   error:NULL];
 	}
 }
 

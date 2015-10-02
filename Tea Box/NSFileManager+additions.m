@@ -20,12 +20,12 @@
 	
 	NSNumber * filesizeNumber = nil;
 	[[NSURL fileURLWithPath:srcPath] getResourceValue:&filesizeNumber forKey:NSURLFileSizeKey error:NULL];
-	__block unsigned long long inputFileSize = [filesizeNumber unsignedLongLongValue];
+	__block unsigned long long inputFileSize = filesizeNumber.unsignedLongLongValue;
 	
 	void (^block)(void) = ^(void) {
 		NSNumber * filesizeNumber = nil;
 		[[NSURL fileURLWithPath:dstPath] getResourceValue:&filesizeNumber forKey:NSURLFileSizeKey error:NULL];
-		unsigned long long outputFileSize = [filesizeNumber unsignedLongLongValue];
+		unsigned long long outputFileSize = filesizeNumber.unsignedLongLongValue;
 		
 		progressionHandler(outputFileSize / (float)inputFileSize);
 	};
@@ -73,8 +73,8 @@
 
 - (void)copyItemAtURL:(NSURL *)srcURL toURL:(NSURL *)dstURL progressionHandler:(void (^)(float progression))progressionHandler errorHandler:(void (^)(NSError * error))errorHandler
 {
-	[self copyItemAtPath:[srcURL path]
-				  toPath:[dstURL path]
+	[self copyItemAtPath:srcURL.path
+				  toPath:dstURL.path
 	  progressionHandler:progressionHandler
 			errorHandler:errorHandler];
 }

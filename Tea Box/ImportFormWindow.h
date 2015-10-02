@@ -7,6 +7,7 @@
 //
 
 #import <AppKit/AppKit.h>
+#import "SheetWindow.h"
 #import "Step.h"
 
 @class ImportFormWindow;
@@ -18,7 +19,7 @@
 
 @end
 
-@interface ImportFormWindow : NSWindow
+@interface ImportFormWindow : SheetWindow
 {
 	@protected
 	id __unsafe_unretained objectValue;
@@ -28,9 +29,6 @@
 
 @property (unsafe_unretained, nonatomic, readonly) id objectValue;
 @property (strong) Step * target;
-
-- (IBAction)cancelAction:(id)sender;
-- (IBAction)okAction:(id)sender;
 
 @end
 

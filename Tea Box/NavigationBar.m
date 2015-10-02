@@ -252,24 +252,18 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 
 - (NSDragOperation)draggingEntered:(NSObject <NSDraggingInfo> *)sender
 {
-	NSLog(@"draggingEntered on %@", self.title);
-	
 	[_navigationBar navigationBarButton:self didBeginDrag:sender];
 	return [sender draggingSourceOperationMask];
 }
 
 - (BOOL)performDragOperation:(NSObject <NSDraggingInfo> *)sender
 {
-	NSLog(@"performDragOperation on %@", self.title);
-	
 	[_navigationBar navigationBarButton:self didReceiveDrag:sender];
 	return YES;
 }
 
 - (void)draggingExited:(NSObject <NSDraggingInfo> *)sender
 {
-	NSLog(@"draggingExited on %@", self.title);
-	
 	[_navigationBar navigationBarButton:self didEndDrag:sender];
 }
 
@@ -317,7 +311,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 {
 	_editable = editable;
 	
-	[_textField setHidden:!(editable)]; // Show the TextField when editable
+	_textField.hidden = !(editable); // Show the TextField when editable
 }
 
 - (BOOL)control:(NSControl *)control textShouldEndEditing:(NSText *)fieldEditor
@@ -338,7 +332,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 - (void)navigationBarButton:(NavigationBarButton *)button didReceiveDrag:(NSObject <NSDraggingInfo> *)sender
 {
 	if ([_delegate respondsToSelector:@selector(navigationBar:didDragItems:onBarButton:)]) {
-		NSArray * items = [[sender draggingPasteboard] pasteboardItems];
+		NSArray * items = [sender draggingPasteboard].pasteboardItems;
 		[_delegate navigationBar:self didDragItems:items onBarButton:button];
 	}
 	
@@ -396,7 +390,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 		return [_rightBarButton performDragOperation:sender];
 	
 	if ([_delegate respondsToSelector:@selector(navigationBar:didDragItems:onBarButton:)]) {
-		NSArray * items = [[sender draggingPasteboard] pasteboardItems];
+		NSArray * items = [sender draggingPasteboard].pasteboardItems;
 		NavigationBarButton * button = ([previousDraggedViewDestination isKindOfClass:[NavigationBarButton class]]) ? (NavigationBarButton *)previousDraggedViewDestination : nil;
 		[_delegate navigationBar:self didDragItems:items onBarButton:button];
 	}
@@ -492,21 +486,13 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 	/* Draw the title */
 	[NSGraphicsContext saveGraphicsState];
 	{
-		/*
-		 NSShadow * shadow = [[NSShadow alloc] init];
-		 shadow.shadowColor = [NSColor colorWithDeviceWhite:0.1 alpha:1.];
-		 shadow.shadowBlurRadius = 2.;
-		 shadow.shadowOffset = NSMakeSize(0., 1.);
-		 [shadow set];
-		 */
-		
 		CGContextSetTextMatrix(context, CGAffineTransformMakeScale(1., -1.)); // Flip the text from the actual not flipped view setting (flipping by the y axis)
 		
 		const CGFloat fontHeight = 18.;
 		NSString * systemFontName = [NSFont boldSystemFontOfSize:10.].fontName;
 		CGContextSelectFont(context, systemFontName.UTF8String, fontHeight, kCGEncodingMacRoman);
 		
-		const char * string = [_title UTF8String];
+		const char * string = _title.UTF8String;
 		const unsigned long length = strlen(string);
 		
 		CGPoint oldPosition = CGContextGetTextPosition(context);

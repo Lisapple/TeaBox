@@ -18,8 +18,8 @@
 
 - (BOOL)sendData:(NSData *)data
 {
-	NSUInteger remainingToWrite = [data length];
-	void * marker = (void *)[data bytes];
+	NSUInteger remainingToWrite = data.length;
+	void * marker = (void *)data.bytes;
 	while (0 < remainingToWrite) {
 		NSInteger actuallyWritten = (NSInteger)[self write:marker maxLength:remainingToWrite];
 		if (actuallyWritten < 0)

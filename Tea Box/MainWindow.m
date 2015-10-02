@@ -52,10 +52,13 @@
 	return self;
 }
 
-- (void)reloadData
+- (void)makeKeyAndOrderFront:(nullable id)sender
 {
-    
+	[self reloadData];
+	[super makeKeyAndOrderFront:sender];
 }
+
+- (void)reloadData { }
 
 - (void)addSubview:(NSView *)aView
 {

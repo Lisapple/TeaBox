@@ -21,7 +21,7 @@
 #import "NavigationBar.h"
 #import "TableView.h"
 
-@interface MainViewController : NSViewController <TableViewDelegate, TableViewDataSource, NavigationControllerDelegate>
+@interface MainViewController : NSViewController <TableViewDelegate, TableViewDataSource, NavigationControllerDelegate, NSTextFieldDelegate>
 {
 	NSArray * sharedHostNames;
 	NSArray * arrayOfSharedProjects;

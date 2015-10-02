@@ -18,15 +18,7 @@
 	if ([self.importDelegate respondsToSelector:@selector(importFormWindowDidCancel:)]) {
 		[self.importDelegate importFormWindowDidCancel:self];
 	}
-	
-	[NSApp endSheet:self returnCode:NSCancelButton];
-	[self orderOut:nil];
-}
-
-- (IBAction)okAction:(id)sender
-{
-	[NSApp endSheet:self returnCode:NSOKButton];
-	[self orderOut:nil];
+	[super cancelAction:sender];
 }
 
 @end
@@ -195,7 +187,7 @@
 	[_progressIndicator stopAnimation:nil];
 	
 	
-	_descriptionLabel.stringValue = [error localizedDescription];
+	_descriptionLabel.stringValue = error.localizedDescription;
 }
 
 @end

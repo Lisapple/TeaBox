@@ -131,6 +131,11 @@
 
 - (BOOL)insertIntoLibrary:(TBLibrary *)library
 {
+	return [self insertIntoLibrary:library error:nil];
+}
+
+- (BOOL)insertIntoLibrary:(TBLibrary *)library error:(NSError **)errorPtr
+{
 	NSParameterAssert(library);
 	
 	self.library = library;
@@ -152,44 +157,59 @@
 	/* Create the statment */
 	sqlite3_stmt *stmt = NULL;
 	int err = sqlite3_prepare_v2(database, sql, -1, &stmt, NULL);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_prepare_v2\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	/* Bind the project id to the statment */
 	int priority_bind = sqlite3_bind_parameter_index(stmt, ":project_id");
 	err = sqlite3_bind_int(stmt, priority_bind, _project.identifier);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_bind_int\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	/* Bind the name to the statment */
 	int name_bind = sqlite3_bind_parameter_index(stmt, ":name");
 	err = sqlite3_bind_text(stmt, name_bind, _name.UTF8String, -1, SQLITE_TRANSIENT); // "-1" to let SQLite to compute the length of the string, SQLITE_TRANSIENT means that the memory of the string is managed by SQLite
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_bind_text\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	/* Bind the description to the statment */
 	int description_bind = sqlite3_bind_parameter_index(stmt, ":description");
 	err = sqlite3_bind_text(stmt, description_bind, _description.UTF8String, -1, SQLITE_TRANSIENT);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_bind_text\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	/* Bind the closed state to the statment */
 	int closed_id_bind = sqlite3_bind_parameter_index(stmt, ":closed");
 	err = sqlite3_bind_int(stmt, closed_id_bind, (int)_closed);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_bind_int\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	if (_identifier != -1) {
 		/* Bind the Step_id to the statment */
 		int step_id_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
 		err = sqlite3_bind_int(stmt, step_id_bind, _identifier);
-		if (err != SQLITE_OK)
+		if (err != SQLITE_OK) {
+			AssertOrSetError(false, @"\"sqlite3_bind_int\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 			return NO;
+		}
 	}
 	
 	/* Execute the statment */
-	if (sqlite3_step(stmt) != SQLITE_DONE)
+	err = sqlite3_step(stmt);
+	if (err != SQLITE_DONE) {
+		AssertOrSetError(false, @"\"sqlite3_step\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	if (_identifier == -1) {
 		/* Get the id of the project (second query) */
@@ -210,7 +230,7 @@
 		/* create a statement from an SQL string */
 		sqlite3_stmt * stmt = NULL;
 		NSString * sql = [NSString stringWithFormat:@"UPDATE Step SET %@ = :value WHERE Step_id = :step_id", name];
-		int err = sqlite3_prepare_v2(_project.library.database, [sql UTF8String], -1, &stmt, NULL);
+		int err = sqlite3_prepare_v2(_project.library.database, sql.UTF8String, -1, &stmt, NULL);
 		if (err != SQLITE_OK)
 			return ;
 		
@@ -221,7 +241,7 @@
 		} else if (value == nil) {
 			err = sqlite3_bind_null(stmt, value_bind);
 		} else {
-			err = sqlite3_bind_text(stmt, value_bind, [[value description] UTF8String], -1, SQLITE_TRANSIENT);
+			err = sqlite3_bind_text(stmt, value_bind, [value description].UTF8String, -1, SQLITE_TRANSIENT);
 		}
 		
 		if (err != SQLITE_OK)
@@ -253,7 +273,7 @@
 - (void)update
 {
 	if (!hasChanged) {
-		NSLog(@"Not changes into %@", self);
+		NSLog(@"No changes into %@", self);
 		return ;
 	}
 	
@@ -261,28 +281,38 @@
 	sqlite3_stmt * stmt = NULL;
 	const char sql[] = "UPDATE Step SET name = :name, description = :description, closed = :closed WHERE Step_id = :step_id";
 	int err = sqlite3_prepare_v2(_project.library.database, sql, -1, &stmt, NULL);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		NSAssert(false, @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
 		return ;
+	}
 	
 	int name_bind = sqlite3_bind_parameter_index(stmt, ":name");
-	err = sqlite3_bind_text(stmt, name_bind, [self.name UTF8String], -1, SQLITE_TRANSIENT);
-	if (err != SQLITE_OK)
+	err = sqlite3_bind_text(stmt, name_bind, self.name.UTF8String, -1, SQLITE_TRANSIENT);
+	if (err != SQLITE_OK) {
+		NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
 		return ;
+	}
 	
 	int description_bind = sqlite3_bind_parameter_index(stmt, ":description");
-	err = sqlite3_bind_text(stmt, description_bind, [self.description UTF8String], -1, SQLITE_TRANSIENT);
-	if (err != SQLITE_OK)
+	err = sqlite3_bind_text(stmt, description_bind, self.description.UTF8String, -1, SQLITE_TRANSIENT);
+	if (err != SQLITE_OK) {
+		NSAssert(false, @"\"sqlite3_bind_text\" did fail with error: %d", err);
 		return ;
+	}
 	
 	int closed_bind = sqlite3_bind_parameter_index(stmt, ":closed");
 	err = sqlite3_bind_int(stmt, closed_bind, (int)self.closed);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
 		return ;
+	}
 	
 	int step_id_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
 	err = sqlite3_bind_int(stmt, step_id_bind, self.identifier);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		NSAssert(false, @"\"sqlite3_bind_int\" did fail with error: %d", err);
 		return ;
+	}
 	
 	if (sqlite3_step(stmt) != SQLITE_DONE) {
 		NSLog(@"error on update resquest: %s", sql);
@@ -308,9 +338,7 @@
 	
 	// Execute statement and step over each row of the result set
 	NSUInteger count = 0;
-	while (sqlite3_step(stmt) == SQLITE_ROW) {
-		++count;
-	}
+	while (sqlite3_step(stmt) == SQLITE_ROW) { ++count; }
 	
 	/* destroy and release the statement */
 	sqlite3_finalize(stmt);

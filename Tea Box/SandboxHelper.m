@@ -36,7 +36,7 @@ static NSMutableArray * _startedScopedResources = nil;
 										  relativeToURL:nil
 									bookmarkDataIsStale:NULL
 												  error:NULL];
-	return [fileURL path];
+	return fileURL.path;
 #endif
 	return nil;
 }

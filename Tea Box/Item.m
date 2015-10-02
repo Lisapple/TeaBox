@@ -123,6 +123,11 @@ NSString * const kItemTypeUnkown = @"????";
 
 - (BOOL)insertIntoLibrary:(TBLibrary *)library
 {
+	return [self insertIntoLibrary:library error:nil];
+}
+
+- (BOOL)insertIntoLibrary:(TBLibrary *)library error:(NSError **)errorPtr
+{
 	NSParameterAssert(library);
 	
 	self.library = library;
@@ -144,45 +149,59 @@ NSString * const kItemTypeUnkown = @"????";
 	/* Create the statment and the SQL query */
 	sqlite3_stmt *stmt = NULL;
 	int err = sqlite3_prepare_v2(database, sql, -1, &stmt, NULL);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_prepare_v2\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	/* Bind the description to the statment */
 	int step_bind = sqlite3_bind_parameter_index(stmt, ":step_id");
 	err = sqlite3_bind_int(stmt, step_bind, _step.identifier);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_bind_int\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	/* Bind the name to the statment */
 	int filename_bind = sqlite3_bind_parameter_index(stmt, ":filename");
 	err = sqlite3_bind_text(stmt, filename_bind, _filename.UTF8String, -1, SQLITE_TRANSIENT); // "-1" to let SQLite to compute the length of the string, SQLITE_TRANSIENT means that the memory of the string is managed by SQLite
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_bind_text\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	/* Bind the type to the statment */
 	int type_bind = sqlite3_bind_parameter_index(stmt, ":type");
 	err = sqlite3_bind_text(stmt, type_bind, _type.UTF8String, -1, SQLITE_TRANSIENT);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_bind_text\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	/* Bind the row index to the statment */
 	int row_index_bind = sqlite3_bind_parameter_index(stmt, ":row_index");
 	err = sqlite3_bind_int(stmt, row_index_bind, _rowIndex);
-	if (err != SQLITE_OK)
+	if (err != SQLITE_OK) {
+		AssertOrSetError(false, @"\"sqlite3_bind_int\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	if (_identifier != -1) {
 		/* Bind the item id to the statment */
 		int item_id_bind = sqlite3_bind_parameter_index(stmt, ":item_id");
 		err = sqlite3_bind_int(stmt, item_id_bind, _identifier);
-		if (err != SQLITE_OK)
+		if (err != SQLITE_OK) {
+			AssertOrSetError(false, @"\"sqlite3_bind_int\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 			return NO;
+		}
 	}
 	
 	/* Execute the statment */
 	err = sqlite3_step(stmt);
-	if (err != SQLITE_DONE)
+	if (err != SQLITE_DONE) {
+		AssertOrSetError(false, @"\"sqlite3_step\" did fail with error: %d", errorPtr, @"Error with code: %d", err);
 		return NO;
+	}
 	
 	if (_identifier == -1) {
 		/* Get the id of the project (second query) */
@@ -258,7 +277,7 @@ NSString * const kItemTypeUnkown = @"????";
 		/* create a statement from an SQL string */
 		sqlite3_stmt * stmt = NULL;
 		NSString * sql = [NSString stringWithFormat:@"UPDATE Item SET %@ = :value WHERE Item_id = :item_id", name];
-		int err = sqlite3_prepare_v2(_step.project.library.database, [sql UTF8String], -1, &stmt, NULL);
+		int err = sqlite3_prepare_v2(_step.project.library.database, sql.UTF8String, -1, &stmt, NULL);
 		NSAssert((err == SQLITE_OK), @"\"sqlite3_prepare_v2\" did fail with error: %d", err);
 		
 		int value_bind = sqlite3_bind_parameter_index(stmt, ":value");
@@ -268,7 +287,7 @@ NSString * const kItemTypeUnkown = @"????";
 		} else if (value == nil) {
 			err = sqlite3_bind_null(stmt, value_bind);
 		} else {
-			err = sqlite3_bind_text(stmt, value_bind, [[value description] UTF8String], -1, SQLITE_TRANSIENT);
+			err = sqlite3_bind_text(stmt, value_bind, [value description].UTF8String, -1, SQLITE_TRANSIENT);
 		}
 		
 		NSAssert((err == SQLITE_OK), @"\"sqlite3_bind_*\" did fail with error: %d", err);

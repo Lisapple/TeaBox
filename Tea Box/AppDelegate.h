@@ -18,6 +18,7 @@
 #import "ProjectViewController.h"
 
 #import "MainWindow.h"
+#import "TutorialWindow.h"
 
 #import "TBLibrary.h"
 
@@ -39,6 +40,7 @@ enum _MainMenuItemTag {
 }
 
 @property (unsafe_unretained) IBOutlet MainWindow * window, * aboutWindow, * preferencesWindow;
+@property (unsafe_unretained) IBOutlet TutorialWindow * tutorialWindow;
 @property (unsafe_unretained) IBOutlet MainViewController * mainViewController;
 @property (unsafe_unretained) IBOutlet ProjectViewController * projectViewController;
 
@@ -57,6 +59,5 @@ enum _MainMenuItemTag {
 - (IBAction)showAboutWindowAction:(id)sender;
 
 - (IBAction)moveDefaultLibrary:(id)sender;
-- (IBAction)reloadTableViewAction:(id)sender;
 
 @end

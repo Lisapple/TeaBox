@@ -20,10 +20,7 @@
 @property (unsafe_unretained) IBOutlet NSPopUpButton * defaultActionPopUpButton;
 @property (unsafe_unretained) IBOutlet NSButton * showPathForLinkedItemsButton;
 
-- (void)reloadData;
-
 - (IBAction)pathControlDidSelectPath:(id)sender;
-
 - (IBAction)showHelpAction:(id)sender;
 
 @end

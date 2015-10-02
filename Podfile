@@ -1,3 +1,2 @@
-pod 'TBTableView', :podspec => 'https://raw.githubusercontent.com/Lisapple/Specs/master/TBTableView/1.0/TBTableView.podspec'
-pod 'TBIndexParser', :podspec => 'https://raw.githubusercontent.com/Lisapple/Specs/master/TBIndexParser/1.0/TBIndexParser.podspec'
-
+pod 'TBTableView', :podspec => 'https://raw.githubusercontent.com/Lisapple/Specs/master/TBTableView/1.1/TBTableView.podspec'
+pod 'TBIndexParser', :podspec => 'https://raw.githubusercontent.com/Lisapple/Specs/master/TBIndexParser/1.1/TBIndexParser.podspec'

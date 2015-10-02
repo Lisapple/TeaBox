@@ -17,11 +17,6 @@
 	return (AppDelegate *)[NSApplication sharedApplication].delegate;
 }
 
-@synthesize window = _window, aboutWindow = _aboutWindow, preferencesWindow = _preferencesWindow;
-@synthesize mainViewController = _mainViewController, projectViewController = _projectViewController;
-
-@synthesize mainWindowMenuItem = _mainWindowMenuItem;
-
 - (void)databaseDidUpdate:(NSString *)filename
 {
 	NSLog(@"database did update at %@", filename);
@@ -40,54 +35,94 @@
 	// - If the library exist but the database is not valid, try to get a backup of the data, if no backup valid (or found),
 	//		show an error and ask the user to re-create the database (by clicking on a button on an alert).
 	
+	BOOL firstLaunch = ([[NSUserDefaults standardUserDefaults] stringForKey:@"last-launch-app-version"] == nil);
 	TBLibrary * defaultLibrary = [TBLibrary defaultLibrary];
 	if (!defaultLibrary) {
-		NSAlert * alert = [NSAlert alertWithMessageText:@"No Library Founds"
-										  defaultButton:@"Choose Library..."
-										alternateButton:@"Create New"
-											otherButton:@"Quit"
-							  informativeTextWithFormat:@"The default Tea Box library can't be found. Do You want to use an existing library or create a new empty one?"];
-		
-		NSInteger returnCode = [alert runModal];
-		if (returnCode == NSAlertDefaultReturn) {// "Choose Library..."
+		if (firstLaunch) { // Show Tutorial
 			
-			NSOpenPanel * openPanel = [NSOpenPanel openPanel];
-			openPanel.allowsMultipleSelection = NO;
-			[openPanel setAllowedFileTypes:@[@"teaboxdb"]];
-			openPanel.prompt = @"Open";
-			if ([openPanel runModal] == NSFileHandlingPanelOKButton ) {
-				NSString * path = openPanel.URL.path;
-				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
-				
-				NSURLBookmarkCreationOptions bookmarkOptions = 0;
+			// On tutorial close or skip: close the tutorial and create a default library
+			// On tutorial on choose: Load the choosen library or create a new one
+			
+			_tutorialWindow.completionHandler = ^(NSURL * choosenURL, BOOL skipped) {
+				if (choosenURL) {
+					NSString * path = [choosenURL.path stringByAppendingString:@"/Library.teaboxdb"];
+					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
+					
+					NSURLBookmarkCreationOptions bookmarkOptions = 0;
 #if _SANDBOX_SUPPORTED_
-				bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
+					bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
 #endif
-				NSData * bookmarkData = [openPanel.URL bookmarkDataWithOptions:bookmarkOptions
-												includingResourceValuesForKeys:nil
-																 relativeToURL:nil
-																		 error:NULL];
-				if (bookmarkData) {
-					NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-					[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
+					NSData * bookmarkData = [choosenURL bookmarkDataWithOptions:bookmarkOptions
+												 includingResourceValuesForKeys:nil relativeToURL:nil error:NULL];
+					if (bookmarkData) {
+						NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+						[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
+					} else {
+						// @TODO: present the error on fail
+					}
 				} else {
-					// @TODO: present the error on fail
+					NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
+					NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
+					NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
+					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
 				}
 				
-			} else {
+				NSString * version = [NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"];
+				[[NSUserDefaults standardUserDefaults] setObject:version forKey:@"last-launch-app-version"];
+				
+				self.window.delegate = self;
+				[self.window makeKeyAndOrderFront:nil]; // Order front the window only after loading the navigationController and the main viewController
+			};
+			[_tutorialWindow makeKeyAndOrderFront:nil];
+			return ;
+			
+		} else { // Ask for user what to do (create a new library or choose an existing, or quit)
+			NSAlert * alert = [NSAlert alertWithMessageText:@"No Library Founds"
+											  defaultButton:@"Choose Library..."
+											alternateButton:@"Create New"
+												otherButton:@"Quit"
+								  informativeTextWithFormat:@"The default Tea Box library can't be found. Do you want to use an existing library or create a new empty one?"];
+			
+			NSInteger returnCode = [alert runModal];
+			if (returnCode == NSAlertDefaultReturn) {// "Choose Library..."
+				
+				NSOpenPanel * openPanel = [NSOpenPanel openPanel];
+				openPanel.allowsMultipleSelection = NO;
+				openPanel.allowedFileTypes = @[ @"teaboxdb" ];
+				openPanel.prompt = @"Open";
+				if ([openPanel runModal] == NSFileHandlingPanelOKButton) {
+					NSString * path = openPanel.URL.path;
+					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
+					
+					NSURLBookmarkCreationOptions bookmarkOptions = 0;
+#if _SANDBOX_SUPPORTED_
+					bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
+#endif
+					NSData * bookmarkData = [openPanel.URL bookmarkDataWithOptions:bookmarkOptions
+													includingResourceValuesForKeys:nil
+																	 relativeToURL:nil
+																			 error:NULL];
+					if (bookmarkData) {
+						NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+						[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
+					} else {
+						// @TODO: present the error on fail
+					}
+					
+				} else {
+					[NSApp terminate:nil];
+				}
+			} else if (returnCode == NSAlertAlternateReturn) {// "Create New"
+				/* Create a new library with a database get from the application bundle */
+				NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
+				NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
+				NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
+				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
+				
+			} else {// "Quit"
 				[NSApp terminate:nil];
 			}
-		} else if (returnCode == NSAlertAlternateReturn) {// "Create New"
-			/* Create a new library with a database get from the application bundle */
-			NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-			NSString * documentPath = ([documentPaths count] > 0) ? documentPaths[0] : NSTemporaryDirectory();
-			NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
-			[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
-			
-		} else {// "Quit"
-			[NSApp terminate:nil];
 		}
-		
 	} else if (!defaultLibrary.database) {
 		/* If the database can't be initialized, try to get a backup, if no backup available, show an alert to create a new database. */
 		
@@ -97,7 +132,7 @@
 		if (success) {
 			/* Use the default library but initialize the database */
 			NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-			NSString * documentPath = ([documentPaths count] > 0) ? documentPaths[0] : NSTemporaryDirectory();
+			NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
 			NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 			[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
 		} else {
@@ -105,11 +140,11 @@
 											  defaultButton:@"Create New"
 											alternateButton:nil
 												otherButton:@"Quit"
-								  informativeTextWithFormat:nil];
+								  informativeTextWithFormat:@""];
 			if ([alert runModal] == NSAlertDefaultReturn) {
 				/* Create a new library with a database get from the application bundle */
 				NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-				NSString * documentPath = ([documentPaths count] > 0) ? documentPaths[0] : NSTemporaryDirectory();
+				NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
 				NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
 			} else {// "Quit"
@@ -118,8 +153,11 @@
 		}
 	}
 	
+	NSString * version = [NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"];
+	[[NSUserDefaults standardUserDefaults] setObject:version forKey:@"last-launch-app-version"];
+	
 	self.window.delegate = self;
-	[self.window makeKeyAndOrderFront:nil];/* Order the window only after loading the navigationController and the main viewController */
+	[self.window makeKeyAndOrderFront:nil]; // Order front the window only after loading the navigationController and the main viewController
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -160,7 +198,6 @@
 
 - (IBAction)openPreferencesAction:(id)sender
 {
-	[_preferencesWindow reloadData];
 	[_preferencesWindow makeKeyAndOrderFront:sender];
 }
 
@@ -176,12 +213,11 @@
 
 - (void)toogleExportMenuItemState:(NSNotification *)notification
 {
-	NSMenu * mainMenu = [NSApp mainMenu];
-	NSMenu * fileMenu = [mainMenu itemAtIndex:1].submenu;
+	NSMenu * fileMenu = [NSApp.mainMenu itemAtIndex:1].submenu;
 	
 	/* Enable "File > Export..." */
 	BOOL cellSelected = ([((TableView *)notification.object) indexPathOfSelectedRow] != nil);
-	[[fileMenu itemWithTag:MainMenuItemExport] setEnabled:cellSelected];
+	[fileMenu itemWithTag:MainMenuItemExport].enabled = cellSelected;
 }
 
 #pragma mark - NavigationController Delegate
@@ -190,8 +226,7 @@
 {
 	/* When the navigation controller push the project view controller, we are into the "projectViewController" */
 	if (viewController == _projectViewController) {
-		NSMenu * mainMenu = [NSApp mainMenu];
-		NSMenu * fileMenu = [mainMenu itemAtIndex:1].submenu;
+		NSMenu * fileMenu = [NSApp.mainMenu itemAtIndex:1].submenu;
 		NSMenu * importMenu = [fileMenu itemWithTag:MainMenuItemImport].submenu;
 		
 		/* Change the main menu "File > New Step..." */
@@ -224,8 +259,7 @@
 {
 	/* When the navigation controller pop to the main view controller, we are into the "mainViewController" */
 	if (viewController == _projectViewController) {
-		NSMenu * mainMenu = [NSApp mainMenu];
-		NSMenu * fileMenu = [mainMenu itemAtIndex:1].submenu;
+		NSMenu * fileMenu = [NSApp.mainMenu itemAtIndex:1].submenu;
 		NSMenu * importMenu = [fileMenu itemWithTag:MainMenuItemImport].submenu;
 		
 		/* Change the main menu "File > New Project..." */
@@ -299,12 +333,12 @@
 	savePanel.prompt = @"Move";
 	savePanel.allowedFileTypes = @[@"teaboxdb"];
 	
-	NSString * libraryFilename = [[TBLibrary defaultLibrary].path lastPathComponent];
+	NSString * libraryFilename = [TBLibrary defaultLibrary].path.lastPathComponent;
 	savePanel.nameFieldStringValue = libraryFilename;
 	
 	[savePanel beginSheetModalForWindow:self.window
 					  completionHandler:^(NSInteger result) {
-						  NSString * newPath = [savePanel.URL path];
+						  NSString * newPath = savePanel.URL.path;
 						  BOOL success = [[TBLibrary defaultLibrary] moveLibraryToPath:newPath
 																				 error:nil];
 						  if (!success) {
@@ -313,12 +347,5 @@
 						  }
 					  }];
 }
-
-- (IBAction)reloadTableViewAction:(id)sender // @TODO: Remove this method
-{
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadTableViewNotification"
-														object:nil];
-}
-
 
 @end

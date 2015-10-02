@@ -31,7 +31,7 @@
 @interface Item (QLPreviewItem) <QLPreviewItem>
 @end
 
-@interface ProjectViewController : NSViewController <TableViewDelegate, TableViewDataSource, NSTextFieldDelegate, IndexWebViewDelegate, NavigationBarDelegate, ImportFormWindowDelegate, QLPreviewPanelDelegate, QLPreviewPanelDataSource>
+@interface ProjectViewController : NSViewController <TableViewDelegate, TableViewDataSource, NSTextFieldDelegate, IndexWebViewDelegate, NavigationBarDelegate, ImportFormWindowDelegate, QLPreviewPanelDelegate, QLPreviewPanelDataSource, WebFrameLoadDelegate>
 {
 	NSArray * steps;
 	NSArray * itemsArray;

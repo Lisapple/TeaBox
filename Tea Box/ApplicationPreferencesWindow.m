@@ -32,7 +32,7 @@
 	_showPathForLinkedItemsButton.state = ([userDefaults boolForKey:@"Show Path For Linked Items"])? NSOnState : NSOffState;
 	
 	/* Update the button for the location of the library */
-	NSString * rootPath = [[TBLibrary defaultLibrary].path stringByDeletingLastPathComponent];
+	NSString * rootPath = [TBLibrary defaultLibrary].path.stringByDeletingLastPathComponent;
 	_pathControl.URL = [NSURL fileURLWithPath:rootPath];
 	
 	_pathControl.target = self;

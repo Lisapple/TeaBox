@@ -8,8 +8,9 @@
 
 #import "NavigationController.h"
 #import "MainWindow.h"
+#import "AppDelegate.h"
 
-#define kPushAnimationDuration 0.35
+#define kPushAnimationDuration 0.4
 #define kPopAnimationDuration kPushAnimationDuration
 
 @implementation NavigationController
@@ -44,7 +45,6 @@ static NSMutableArray * _delegates = nil;
 	[_delegates removeObject:delegate];
 }
 
-
 + (void)setRootViewController:(NSViewController *)viewController
 {
 	// @TODO: implement it (if needed)
@@ -56,14 +56,14 @@ static NSMutableArray * _delegates = nil;
 		return ;
 	
 	if (_viewControllers.count <= 1) {
-		NSLog(@"No more view to pop, %@ is le last one", [_viewControllers lastObject]);
+		NSLog(@"No more view to pop, %@ is the last one", _viewControllers.lastObject);
 		return;
 	}
 	
-	MainWindow * window = (MainWindow *)[[NSApp delegate] window];
+	MainWindow * window = [(AppDelegate *)NSApp.delegate window];
 	
 	NSViewController * nextToLastViewController = _viewControllers[(_viewControllers.count - 2)]; // Get the next to last view controller from stack
-	NSViewController * lastViewController = [_viewControllers lastObject];
+	NSViewController * lastViewController = _viewControllers.lastObject;
 	
 	/* Call delegates */
 	for (id <NavigationControllerDelegate> delegate in _delegates) {
@@ -81,15 +81,15 @@ static NSMutableArray * _delegates = nil;
 		isPushingOrPoping = YES;
 		
 		/* Animation informations for the currently shown view controller */
-		NSViewController * oldViewController = [_viewControllers lastObject];
+		NSViewController * oldViewController = _viewControllers.lastObject;
 		NSRect oldFrame = oldViewController.view.frame;
 		oldFrame.origin.x = 0.; // Move view controller x position from 0 to window's width
 		NSRect newFrame = oldViewController.view.frame;
 		newFrame.origin.x = window.frame.size.width;
 		
-		NSDictionary * oldViewDictionary = @{NSViewAnimationTargetKey : oldViewController.view,
-									   NSViewAnimationStartFrameKey : [NSValue valueWithRect:oldFrame],
-									   NSViewAnimationEndFrameKey : [NSValue valueWithRect:newFrame]};
+		NSDictionary * oldViewDictionary = @{ NSViewAnimationTargetKey : oldViewController.view,
+											  NSViewAnimationStartFrameKey : [NSValue valueWithRect:oldFrame],
+											  NSViewAnimationEndFrameKey : [NSValue valueWithRect:newFrame] };
 		
 		/* Animation informations for the view controller to show */
 		oldFrame = nextToLastViewController.view.frame;
@@ -97,17 +97,15 @@ static NSMutableArray * _delegates = nil;
 		newFrame = nextToLastViewController.view.frame;
 		newFrame.origin.x = 0.;
 		
-		NSDictionary * newViewDictionary = @{NSViewAnimationTargetKey : nextToLastViewController.view,
-									   NSViewAnimationStartFrameKey : [NSValue valueWithRect:oldFrame],
-									   NSViewAnimationEndFrameKey : [NSValue valueWithRect:newFrame]};
+		NSDictionary * newViewDictionary = @{ NSViewAnimationTargetKey : nextToLastViewController.view,
+											  NSViewAnimationStartFrameKey : [NSValue valueWithRect:oldFrame],
+											  NSViewAnimationEndFrameKey : [NSValue valueWithRect:newFrame] };
 		
 		/* Creat and set up the animation */
 		NSViewAnimation * animation = [[NSViewAnimation alloc] initWithViewAnimations:@[oldViewDictionary, newViewDictionary]];
-		[animation setDuration:kPopAnimationDuration];
-		[animation setAnimationCurve:NSAnimationEaseInOut];
-		
+		animation.duration = kPopAnimationDuration;
+		animation.animationCurve = NSAnimationEaseInOut;
 		[animation startAnimation];
-		
 		
 		double delayInSeconds = kPopAnimationDuration;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
@@ -150,8 +148,7 @@ static NSMutableArray * _delegates = nil;
 			[delegate navigationControllerWillPushViewController:viewController animated:animated];
 	}
 	
-	MainWindow * window = (MainWindow *)[[NSApp delegate] window];
-	
+	MainWindow * window = [(AppDelegate *)NSApp.delegate window];
 	viewController.view.frame = ((NSView *)window.contentView).bounds;
 	
 	if (animated) {
@@ -164,15 +161,15 @@ static NSMutableArray * _delegates = nil;
 		[window addSubview:viewController.view];
 		
 		/* Animation informations for the currently shown view controller */
-		NSViewController * oldViewController = [_viewControllers lastObject];
+		NSViewController * oldViewController = _viewControllers.lastObject;
 		NSRect oldFrame = oldViewController.view.frame;
 		oldFrame.origin.x = 0.; // Move view controller x position from 0 to -window's width
 		NSRect newFrame = oldViewController.view.frame;
 		newFrame.origin.x = -window.frame.size.width;
 		
-		NSDictionary * oldViewDictionary = @{NSViewAnimationTargetKey : oldViewController.view,
-														  NSViewAnimationStartFrameKey : [NSValue valueWithRect:oldFrame],
-															NSViewAnimationEndFrameKey : [NSValue valueWithRect:newFrame]};
+		NSDictionary * oldViewDictionary = @{ NSViewAnimationTargetKey : oldViewController.view,
+											  NSViewAnimationStartFrameKey : [NSValue valueWithRect:oldFrame],
+											  NSViewAnimationEndFrameKey : [NSValue valueWithRect:newFrame] };
 		
 		/* Animation informations for the view controller to show */
 		oldFrame = viewController.view.frame;
@@ -186,15 +183,15 @@ static NSMutableArray * _delegates = nil;
 		
 		/* Create and set up the animation */
 		NSViewAnimation * animation = [[NSViewAnimation alloc] initWithViewAnimations:@[oldViewDictionary, newViewDictionary]];
-		[animation setDuration:kPushAnimationDuration];
-		[animation setAnimationCurve:NSAnimationEaseInOut];
+		animation.duration = kPushAnimationDuration;
+		animation.animationCurve = NSAnimationEaseInOut;
 		[animation startAnimation];
 		
 		double delayInSeconds = kPushAnimationDuration;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
 		dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
 			/* Remove the current view */
-			NSViewController * lastViewController = [_viewControllers lastObject];
+			NSViewController * lastViewController = _viewControllers.lastObject;
 			[lastViewController.view removeFromSuperview];
 			
 			/* Add the new view controller to "viewController" */
@@ -212,7 +209,7 @@ static NSMutableArray * _delegates = nil;
 	} else { // Not animated
 		
 		/* Remove the current view */
-		NSViewController * lastViewController = [_viewControllers lastObject];
+		NSViewController * lastViewController = _viewControllers.lastObject;
 		[lastViewController.view removeFromSuperview];
 		
 		/* Add the new view controller (to the window and to "_viewControllers") */

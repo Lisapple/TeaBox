@@ -7,6 +7,7 @@
 //
 
 #import "ProjectViewController.h"
+#import "SheetWindow.h"
 
 #import "NSIndexPath+additions.h"
 #import "NSMenu+additions.h"
@@ -139,14 +140,12 @@
 #endif
 	}
 	
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(reloadData)
-												 name:@"ReloadTableViewNotification"
-											   object:nil];
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(windowDidResize:)
-												 name:NSWindowDidResizeNotification
-											   object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidResize:)
+												 name:NSWindowDidResizeNotification object:nil];
+	
+	[[NSNotificationCenter defaultCenter] addObserverForName:NSControlTextDidChangeNotification
+												  usingBlock:^(NSNotification *notification) {
+		_createStepOKButton.enabled = (_createStepField.stringValue.length > 0); }];
 	
 	/* Save the index changes when the window resign key (in general, when the user switch to another application) */
 	[[NSNotificationCenter defaultCenter] addObserverForName:NSWindowDidBecomeKeyNotification
@@ -222,7 +221,7 @@
 	
 	_navigationBar.title = _project.name;
 	
-	[_descriptionTextField setEditable:_editing];
+	_descriptionTextField.editable = _editing;
 	_descriptionTextField.stringValue = _project.description;
 	NSRect frame = _descriptionTextField.frame;
 	frame.size.height = INFINITY;
@@ -257,7 +256,7 @@
 	
 	[self.tableView becomeFirstResponder];
 	
-	[_quickLookMenuItem setEnabled:(self.tableView.indexPathOfSelectedRow != nil)];
+	_quickLookMenuItem.enabled = (self.tableView.indexPathOfSelectedRow != nil);
 }
 
 - (void)reloadBottomLabel
@@ -277,7 +276,7 @@
 		_bottomLabel.stringValue = [NSString stringWithFormat:@"Priority: %@ - Modified: %@", priorityNames[(NSUInteger)_project.priority], [formatter stringFromDate:_project.lastModificationDate]];
 	}
 	
-	[_priorityButton setHidden:!_editing];
+	_priorityButton.hidden = !_editing;
 }
 
 - (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame
@@ -311,15 +310,15 @@
 	
 	_navigationBar.editable = editing;
 	
-	[_descriptionTextField setEditable:editing];
-	[_descriptionTextField setDrawsBackground:editing];
+	_descriptionTextField.editable = editing;
+	_descriptionTextField.drawsBackground = editing;
 	
 	if (editing) {
 		[self.tableView startTrackingSections];
-		[[NSApp mainWindow] makeFirstResponder:_navigationBar.textField];
+		[NSApp.mainWindow makeFirstResponder:_navigationBar.textField];
 	} else {
 		[self.tableView stopTrackingSections];
-		[[NSApp mainWindow] makeFirstResponder:nil];
+		[NSApp.mainWindow makeFirstResponder:nil];
 	}
 	
 	_editing = editing;
@@ -460,7 +459,7 @@
 {
 	/* Remoevt the QuickLook panel */
 	QLPreviewPanel * previewPanel = [QLPreviewPanel sharedPreviewPanel];
-    if ([QLPreviewPanel sharedPreviewPanelExists] && [previewPanel isVisible]) {
+    if ([QLPreviewPanel sharedPreviewPanelExists] && previewPanel.visible) {
         [previewPanel orderOut:nil];
 	}
 	
@@ -500,7 +499,6 @@
 	NSInteger index = ([item.menu indexOfItem:item] - 1); // Minus one for "Priority"
 	NSInteger count = (item.menu.numberOfItems - 1); // Minus one for "Priority"
 	if (0 <= index && index < count) {
-		NSLog(@"priorityPopUpDidChangeAction: \"%@\" (%ld)", item.title, item.tag);
 		[_project updateValue:@(item.tag)
 					   forKey:@"priority"];
 		[self reloadBottomLabel];
@@ -633,7 +631,7 @@
 	
 	NSOpenPanel * openPanel = [NSOpenPanel openPanel];
 	if (path.stringByDeletingLastPathComponent) {
-		openPanel.directoryURL = [NSURL fileURLWithPath:[path stringByDeletingLastPathComponent]];
+		openPanel.directoryURL = [NSURL fileURLWithPath:path.stringByDeletingLastPathComponent];
 	}
 	openPanel.allowsMultipleSelection = NO;
 	openPanel.canChooseDirectories = YES;
@@ -659,7 +657,7 @@
 								  if (!success)
 									  [NSApp presentError:error];
 								  
-								  [item updateValue:[newPath lastPathComponent] forKey:@"filename"];
+								  [item updateValue:newPath.lastPathComponent forKey:@"filename"];
 							  } else {
 								  /* Create bookmark data to the file (as the file was linked), save it to the userDefaults and set "item.filename" to nil */
 								  
@@ -874,7 +872,7 @@
 - (IBAction)showQuickLookAction:(id)sender
 {
 	QLPreviewPanel * previewPanel = [QLPreviewPanel sharedPreviewPanel];
-    if ([QLPreviewPanel sharedPreviewPanelExists] && [previewPanel isVisible]) {
+    if ([QLPreviewPanel sharedPreviewPanelExists] && previewPanel.visible) {
         [previewPanel orderOut:nil];
     } else {
         [previewPanel makeKeyAndOrderFront:nil];
@@ -906,6 +904,7 @@
 
 - (IBAction)importURLAction:(NSMenuItem *)sender
 {
+	_urlImportFormWindow.inputTextField.stringValue = @"";
 	if (sender.tag != -1) {
 		_urlImportFormWindow.target = [Step stepWithIdentifier:(int)sender.tag fromLibrary:[TBLibrary defaultLibrary]];
 	}
@@ -916,6 +915,7 @@
 
 - (IBAction)importTextAction:(NSMenuItem *)sender
 {
+	_textImportFormWindow.inputTextView.string = @"";
 	if (sender.tag != -1) {
 		_textImportFormWindow.target = [Step stepWithIdentifier:(int)sender.tag fromLibrary:[TBLibrary defaultLibrary]];
 	}
@@ -948,16 +948,16 @@
 		filename = [self freeDraggedFilenameForStep:step extension:@"png"];
 		NSString * path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
 		
-		NSArray * representations = [(NSImage *)object representations];
+		NSArray * representations = ((NSImage *)object).representations;
 		if (representations.count == 0) return ;
-		NSData * data = [representations[0] representationUsingType:NSPNGFileType properties:nil];
+		NSData * data = [representations[0] representationUsingType:NSPNGFileType properties:@{}];
 		[data writeToFile:path atomically:YES];
 		
 	} else if (window == _urlImportFormWindow) {
 		type = kItemTypeWebURL;
 		filename = [self freeDraggedFilenameForStep:step extension:@"txt"];
 		NSString * path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
-		NSData * data = [[(NSURL *)object absoluteString] dataUsingEncoding:NSUTF8StringEncoding];
+		NSData * data = [((NSURL *)object).absoluteString dataUsingEncoding:NSUTF8StringEncoding];
 		[data writeToFile:path atomically:YES];
 		
 	} else if (window == _textImportFormWindow) {
@@ -966,7 +966,7 @@
 		NSString * path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
 		NSAttributedString * attributedString = (NSAttributedString *)object;
 		NSData * data = [attributedString RTFFromRange:NSMakeRange(0, attributedString.length)
-									documentAttributes:NULL];
+									documentAttributes:@{}];
 		[data writeToFile:path atomically:YES];
 	}
 	
@@ -1011,7 +1011,7 @@
 								  }
 							  }
 							  
-							  NSArray * URLs = [openPanel URLs];
+							  NSArray * URLs = openPanel.URLs;
 							  NSMutableArray * paths = [NSMutableArray arrayWithCapacity:URLs.count];
 							  for (NSURL * fileURL in URLs) { [paths addObject:fileURL.path]; }
 							  
@@ -1025,7 +1025,7 @@
 									  for (NSString * path in paths) {
 										  NSNumber * isDirectory = nil;
 										  if (path) [[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
-										  if ([isDirectory boolValue]) { containsDirectory = YES; break; }
+										  if (isDirectory.boolValue) { containsDirectory = YES; break; }
 									  }
 									  
 									  if (containsDirectory) {
@@ -1325,7 +1325,7 @@
 			NSAttributedString * attributedString = [[NSAttributedString alloc] initWithPath:path
 																		  documentAttributes:NULL];
 			if (attributedString)
-				cell.title = [[attributedString string] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+				cell.title = [attributedString.string stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
 			else {
 				cell.title = @"File not found";
 				cell.textField.textColor = [NSColor grayColor];
@@ -1348,14 +1348,14 @@
 			NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 			if ([userDefaults boolForKey:@"Show Path For Linked Items"]) {
 				
-				NSString * newPath = [[_project.library pathForItem:item] stringByAbbreviatingWithTildeInPath];
+				NSString * newPath = [_project.library pathForItem:item].stringByAbbreviatingWithTildeInPath;
 				NSMutableAttributedString * mutableString = [[NSMutableAttributedString alloc] initWithString:newPath attributes:nil];
 				
-				NSRange rootPathRange = [newPath rangeOfString:[newPath stringByDeletingLastPathComponent]];
+				NSRange rootPathRange = [newPath rangeOfString:newPath.stringByDeletingLastPathComponent];
 				rootPathRange.length++; // Add one to the length for the "/" between the root path and the last path component
 				NSDictionary * attributes = @{ NSForegroundColorAttributeName: [NSColor grayColor] };
 				[mutableString setAttributes:attributes range:rootPathRange];
-				[cell.textField.cell setAttributedStringValue:mutableString];
+				cell.textField.cell.attributedStringValue = mutableString;
 				
 			} else {
 				NSString * path = [item.library pathForItem:item];
@@ -1459,11 +1459,11 @@
 		[fileURL stopAccessingSecurityScopedResource];
 #endif
 		if (!success) {
-			NSAlert * alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:@"The file \"%@\" couldn't be openned.", [fileURL path]]
+			NSAlert * alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:@"The file \"%@\" couldn't be openned.", fileURL.path]
 											  defaultButton:@"OK"
 											alternateButton:nil
 												otherButton:nil
-								  informativeTextWithFormat:nil];
+								  informativeTextWithFormat:@""];
 			[alert beginSheetModalForWindow:self.view.window
 							  modalDelegate:nil
 							 didEndSelector:NULL
@@ -1536,10 +1536,10 @@
 				url = [NSURL fileURLWithPath:path];
 			}
 			
-			NSString * defaultApplicationPath = [[[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] path];
+			NSString * defaultApplicationPath = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url].path;
 			if (defaultApplicationPath) {
 				/* -[NSWorkspace getInfoForFile:application:type:] returns the path to the application; retreive only the name of the application (i.e.: remove the path and ".app") */
-				NSString * defaultApplication = [[defaultApplicationPath lastPathComponent] stringByDeletingPathExtension];
+				NSString * defaultApplication = defaultApplicationPath.lastPathComponent.stringByDeletingPathExtension;
 				[menu addItemWithTitle:[NSString stringWithFormat:@"Open With %@", defaultApplication]
 								target:self
 								action:@selector(openWithDefaultApplicationAction:)];
@@ -1781,7 +1781,7 @@
 				if ([itemType isEqualToString:kItemTypeFile] || [itemType isEqualToString:kItemTypeFolder]) {
 					[paths addObject:path];
 				} else {
-					Item * item = [[Item alloc] initWithFilename:[path lastPathComponent]
+					Item * item = [[Item alloc] initWithFilename:path.lastPathComponent
 															type:itemType
 														rowIndex:(int)indexPath.row
 													  identifier:-1
@@ -1795,17 +1795,8 @@
 		
 		if (paths.count > 0) {
 			
-			NSLog(@"paths: %@", paths);
-			
 			NSDragOperation op = [draggingInfo draggingSourceOperationMask];
-			/*
-			 BOOL moved = (op & NSDragOperationMove);
-			 BOOL copied = (op & NSDragOperationCopy);
-			 BOOL linked = (op & NSDragOperationLink);
-			 BOOL isGeneric = (op & NSDragOperationGeneric);
-			 */
-			
-			if (op & NSDragOperationGeneric) {
+			if (op & NSDragOperationGeneric) { // No key modifier, use the defaull action (or ask to it)
 				NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 				NSString * defaultDragOp = [userDefaults stringForKey:@"Default-Drag-Operation"];
 				if (defaultDragOp) {
@@ -1816,17 +1807,17 @@
 				}
 			}
 			
-			if (op & NSDragOperationMove){// "Command" (cmd) Key, move items
+			if (op & NSDragOperationMove){ // "Command" (cmd) Key, move items
 				// @TODO: show an alert (like when copying) to ask for recursivity => used???
 				[self moveItemsFromPaths:paths recursive:NO insertIntoStep:step atRowIndex:(int)indexPath.row];
 				
-			} else if (op & NSDragOperationCopy) {// "Option" (alt) Key, copy items
+			} else if (op & NSDragOperationCopy) { // "Option" (alt) Key, copy items
 				
 				BOOL containsDirectory = NO;
 				for (NSString * path in paths) {
 					NSNumber * isDirectory = nil;
 					if (path) [[NSURL fileURLWithPath:path] getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
-					if ([isDirectory boolValue]) {
+					if (isDirectory.boolValue) {
 						containsDirectory = YES;
 						break;
 					}
@@ -1862,7 +1853,7 @@
 					[self copyItemsFromPaths:paths recursive:NO insertIntoStep:step atRowIndex:(int)indexPath.row];
 				}
 				
-			} else if (op & NSDragOperationLink) {// "Control" (ctrl) Key, link items
+			} else if (op & NSDragOperationLink) { // "Control" (ctrl) Key, link items
 				[self linkItemsFromPaths:paths recursive:NO insertIntoStep:step atRowIndex:(int)indexPath.row];
 			}
 		}
@@ -1909,11 +1900,11 @@
 															  includingPropertiesForKeys:@[NSURLIsDirectoryKey, NSURLNameKey]
 																				 options:(NSDirectoryEnumerationSkipsSubdirectoryDescendants | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsHiddenFiles)
 																			errorHandler:^BOOL(NSURL *url, NSError *error) {
-																				NSLog(@"error: %@", [error localizedDescription]);
+																				NSLog(@"error: %@", error.localizedDescription);
 																				return YES; // Return "YES" to continue enumeration of error
 																			}];
 	/* Create a step from the directory at "path" */
-	NSString * name = [NSString stringWithFormat:@"Step with folder named \"%@\"", [path lastPathComponent]];
+	NSString * name = [NSString stringWithFormat:@"Step with folder named \"%@\"", path.lastPathComponent];
 	Step * step = [[Step alloc] initWithName:name
 								 description:nil
 									 project:_project];
@@ -1922,14 +1913,14 @@
 	for (NSURL * fileURL in enumerator) {
 		
 		NSString * destinationFolder = [_project.library pathForStepFolder:step];
-		NSString * newFilename = [self freeFilenameForPath:[NSString stringWithFormat:@"%@/%@", destinationFolder, [path lastPathComponent]]];
+		NSString * newFilename = [self freeFilenameForPath:[NSString stringWithFormat:@"%@/%@", destinationFolder, path.lastPathComponent]];
 		
 		/* Generate a path like: {Path to Default Library}/{Project Name}/{Step Name}/{File Name}.{Extension} */
 		NSString * destinationPath = [NSString stringWithFormat:@"%@/%@", destinationFolder, newFilename];
 		
 		NSNumber * isDirectory = nil;
         [fileURL getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
-		if ([isDirectory boolValue]) {
+		if (isDirectory.boolValue) {
 			
 			if (recursive) {
 				[self copyDirectoryContentAtPath:destinationPath recursive:YES];
@@ -1979,18 +1970,18 @@
 			
 		} else {// Files
 			NSString * destinationFolder = [_project.library pathForStepFolder:step];
-			NSString * newFilename = [self freeFilenameForPath:[NSString stringWithFormat:@"%@/%@", destinationFolder, [path lastPathComponent]]];
+			NSString * newFilename = [self freeFilenameForPath:[NSString stringWithFormat:@"%@/%@", destinationFolder, path.lastPathComponent]];
 			
 			/* Generate a path like: {Path to Default Library}/{Project Name}/{Step Name}/{File Name}.{Extension} */
 			NSString * destinationPath = [NSString stringWithFormat:@"%@/%@", destinationFolder, newFilename];
 			
 			NSError * error = nil;
-			BOOL success = [manager createDirectoryAtPath:[destinationPath stringByDeletingLastPathComponent]
+			BOOL success = [manager createDirectoryAtPath:destinationPath.stringByDeletingLastPathComponent
 							  withIntermediateDirectories:YES
 											   attributes:nil
 													error:&error];
 			if (!success)
-				NSLog(@"Create directory error: %@", [error localizedDescription]);
+				NSLog(@"Create directory error: %@", error.localizedDescription);
 			
 			if (success) {
 				
@@ -2056,7 +2047,7 @@
 		
 		BOOL isBundle, isPackage;
 		[[NSURL fileURLWithPath:path] fileIsBundle:&isBundle isPackage:&isPackage];
-		NSString * itemType = ([isDirectory boolValue] && !isBundle && !isPackage)? kItemTypeFolder: kItemTypeFile;
+		NSString * itemType = (isDirectory.boolValue && !isBundle && !isPackage)? kItemTypeFolder: kItemTypeFile;
 		
 		
 		Item * item = [[Item alloc] initWithFilename:nil // Pass nil as filename
@@ -2076,7 +2067,7 @@
 												   relativeToURL:nil// Use nil for app-scoped bookmark
 														   error:&error];
 		if (error)
-			NSLog(@"error: %@", [error localizedDescription]);
+			NSLog(@"error: %@", error.localizedDescription);
 		
 		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 		NSString * key = [NSString stringWithFormat:@"%i/%i/%i", step.project.identifier, step.identifier, item.identifier]; // The key looks like "{Project ID}/{Step ID}/{Item ID}"
@@ -2109,7 +2100,7 @@
 		} else {// Files
 			
 			NSString * destinationFolder = [_project.library pathForStepFolder:step];
-			NSString * newFilename = [self freeFilenameForPath:[NSString stringWithFormat:@"%@/%@", destinationFolder, [path lastPathComponent]]];
+			NSString * newFilename = [self freeFilenameForPath:[NSString stringWithFormat:@"%@/%@", destinationFolder, path.lastPathComponent]];
 			
 			/* Generate a path like: {Path to Default Library}/{Project Name}/{Step Name}/{File Name}.{Extension} */
 			NSString * destinationPath = [NSString stringWithFormat:@"%@/%@", destinationFolder, newFilename];
@@ -2120,7 +2111,7 @@
 											   attributes:nil
 													error:&error];
 			if (!success)
-				NSLog(@"Create directory error: %@", [error localizedDescription]);
+				NSLog(@"Create directory error: %@", error.localizedDescription);
 			
 			if (success) {
 				error = nil;
@@ -2171,7 +2162,7 @@
 - (NSString *)freeDraggedFilenameForStep:(Step *)step extension:(NSString *)extension
 {
 	NSDateFormatter * dateFormatter = [[NSDateFormatter alloc] init];
-	[dateFormatter setDateFormat:@"dd-MM-yyyy HH.mm.ss"];
+	dateFormatter.dateFormat = @"dd-MM-yyyy HH.mm.ss";
 	NSString * dateString = [dateFormatter stringFromDate:[NSDate date]];
 	
 	NSString * filename = [NSString stringWithFormat:@"Dragged File %@%@", dateString, (extension)? [@"." stringByAppendingString:extension]: @""];
@@ -2181,9 +2172,9 @@
 
 - (NSString *)freeFilenameForPath:(NSString *)path
 {
-	NSString * parentFolder = [path stringByDeletingLastPathComponent];
-	NSString * filename = [[path lastPathComponent] stringByDeletingPathExtension];
-	NSString * extension = [path pathExtension];
+	NSString * parentFolder = path.stringByDeletingLastPathComponent;
+	NSString * filename = path.lastPathComponent.stringByDeletingPathExtension;
+	NSString * extension = path.pathExtension;
 	
 	NSFileManager * fileManager = [[NSFileManager alloc] init];
 	int index = 2;
