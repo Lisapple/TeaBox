@@ -41,12 +41,8 @@
 
 @end
 
-@interface _ImportFormImageView : NSView
-{
-	NSImageView * imageView;
-}
+@interface _ImportFormImageView : NSImageView
 
-@property (nonatomic, copy) NSImage * image;
 @property (nonatomic, strong) id <_ImportFormImageViewDelegate> delegate;
 
 @end
