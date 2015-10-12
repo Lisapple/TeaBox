@@ -75,26 +75,28 @@
 
 - (void)loadView
 {
-	priorityNames = @[@"None", @"Low", @"Normal", @"High"];
-	
-	typeImages = @[[NSImage imageNamed:@"image-type"], [NSImage imageNamed:@"text-type"], [NSImage imageNamed:@"url-type"], [NSImage imageNamed:@"file-type"], [NSImage imageNamed:@"folder-type"]];
-	typeSelectedImages = @[[NSImage imageNamed:@"image-type-active"], [NSImage imageNamed:@"text-type-active"], [NSImage imageNamed:@"url-type-active"], [NSImage imageNamed:@"file-type-active"], [NSImage imageNamed:@"folder-type-active"]];
-	types = @[kItemTypeImage, kItemTypeText, kItemTypeWebURL, kItemTypeFile, kItemTypeFolder];
-	
 	[super loadView];
 	
-	NSArray * draggedTypes = @[@"public.image" /* Images from an application (not on disk) */,
-							  NSPasteboardTypeRTF /* RTF formatted data (before NSPasteboardTypeString because RTF data are string, so NSPasteboardTypeString will be preferred if it's placed before NSPasteboardTypeRTF) */,
-							  NSPasteboardTypeString /* Text content */,
-							  @"public.file-url"];
+	priorityNames = @[ @"None", @"Low", @"Normal", @"High" ];
+	typeImages = @[ [NSImage imageNamed:@"image-type"], [NSImage imageNamed:@"text-type"],
+					[NSImage imageNamed:@"url-type"], [NSImage imageNamed:@"file-type"],
+					[NSImage imageNamed:@"folder-type"] ];
+	typeSelectedImages = @[ [NSImage imageNamed:@"image-type-active"], [NSImage imageNamed:@"text-type-active"],
+							[NSImage imageNamed:@"url-type-active"], [NSImage imageNamed:@"file-type-active"],
+							[NSImage imageNamed:@"folder-type-active"] ];
+	types = @[ kItemTypeImage, kItemTypeText, kItemTypeWebURL, kItemTypeFile, kItemTypeFolder ];
+	
+	NSArray * draggedTypes = @[ @"public.image", // Images from an application (not on disk)
+								NSPasteboardTypeRTF, // RTF formatted data (before NSPasteboardTypeString because RTF data are string, so NSPasteboardTypeString will be preferred if it's placed before NSPasteboardTypeRTF)
+								NSPasteboardTypeString, // Text content
+								@"public.file-url" ];
 	[self.tableView registerForDraggedTypes:draggedTypes];
 	self.tableView.delegate = self;
 	self.tableView.dataSource = self;
 	self.tableView.rowHeight = 24.;
 	
-	NavigationBarButton * backButton = [[NavigationBarButton alloc] initWithType:NavigationBarButtonTypeBack
+	self.navigationBar.leftBarButton = [[NavigationBarButton alloc] initWithType:NavigationBarButtonTypeBack
 																		  target:self action:@selector(backAction:)];
-	self.navigationBar.leftBarButton = backButton;
 	
 	NavigationBarButton * importButton = [[NavigationBarButton alloc] initWithTitle:@"Import..."
 																			 target:self action:@selector(importAction:)];
@@ -551,7 +553,17 @@
 {
 	Item * item = [self itemAtIndexPath:self.tableView.indexPathOfSelectedRow];
 	NSString * path = [_project.library pathForItem:item];
-	[[NSWorkspace sharedWorkspace] openFile:path];
+	if ([item.type isEqualToString:kItemTypeWebURL]) {
+		NSString * content = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+		if (content) {
+			NSURL * url = [NSURL URLWithString:content];
+			if (url) {
+				[[NSWorkspace sharedWorkspace] openURL:url];
+			}
+		}
+	} else {
+		[[NSWorkspace sharedWorkspace] openFile:path];
+	}
 }
 
 - (IBAction)showInFinderAction:(id)sender
@@ -614,7 +626,6 @@
 					  completionHandler:^(NSInteger result) {
 						  if (result == NSFileHandlingPanelOKButton) {
 							  NSString * destinationPath = savePanel.URL.path;
-							  
 							  NSError * error = nil;
 							  BOOL success = [[NSFileManager defaultManager] copyItemAtPath:path toPath:destinationPath error:&error];
 							  if (!success)
@@ -1321,42 +1332,41 @@
 		cell.image = typeImages[index];
 		cell.selectedImage = typeSelectedImages[index];
 		
-		if ([item.type isEqualToString:kItemTypeText]) {// Text
-			NSAttributedString * attributedString = [[NSAttributedString alloc] initWithPath:path
-																		  documentAttributes:NULL];
-			if (attributedString)
-				cell.title = [attributedString.string stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+		if ([item.type isEqualToString:kItemTypeText]) { // Text
+			if (path) {
+				NSAttributedString * attributedString = [[NSAttributedString alloc] initWithPath:path documentAttributes:NULL];
+				cell.title = (attributedString) ? [attributedString.string stringByReplacingOccurrencesOfString:@"\n" withString:@" "] : @"";
+			}
 			else {
 				cell.title = @"File not found";
 				cell.textField.textColor = [NSColor grayColor];
 			}
 			
 			
-		} else if ([item.type isEqualToString:kItemTypeWebURL]) {// URL
-			NSString * content = [[NSString alloc] initWithContentsOfFile:path
-															 usedEncoding:nil
-																	error:NULL];
-			if (content)
-				cell.title = content;
+		} else if ([item.type isEqualToString:kItemTypeWebURL]) { // URL
+
+			if (path) {
+				cell.title = [[NSString alloc] initWithContentsOfFile:path usedEncoding:nil error:NULL];
+			}
 			else {
 				cell.title = @"File not found";
 				cell.textField.textColor = [NSColor grayColor];
 			}
 			
-		} else {// Image and File
+		} else { // Image and File
 			
 			NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 			if ([userDefaults boolForKey:@"Show Path For Linked Items"]) {
 				
 				NSString * newPath = [_project.library pathForItem:item].stringByAbbreviatingWithTildeInPath;
-				NSMutableAttributedString * mutableString = [[NSMutableAttributedString alloc] initWithString:newPath attributes:nil];
-				
-				NSRange rootPathRange = [newPath rangeOfString:newPath.stringByDeletingLastPathComponent];
-				rootPathRange.length++; // Add one to the length for the "/" between the root path and the last path component
-				NSDictionary * attributes = @{ NSForegroundColorAttributeName: [NSColor grayColor] };
-				[mutableString setAttributes:attributes range:rootPathRange];
-				cell.textField.cell.attributedStringValue = mutableString;
-				
+				if (newPath) {
+					NSMutableAttributedString * mutableString = [[NSMutableAttributedString alloc] initWithString:newPath attributes:nil];
+					NSRange rootPathRange = [newPath rangeOfString:newPath.stringByDeletingLastPathComponent];
+					rootPathRange.length++; // Add one to the length for the "/" between the root path and the last path component
+					NSDictionary * attributes = @{ NSForegroundColorAttributeName: [NSColor grayColor] };
+					[mutableString setAttributes:attributes range:rootPathRange];
+					cell.textField.cell.attributedStringValue = mutableString;
+				}
 			} else {
 				NSString * path = [item.library pathForItem:item];
 				cell.title = (path) ? path.lastPathComponent : @"???";
@@ -1447,19 +1457,30 @@
 		item = (Item *)((NSArray *)itemsArray[(indexPath.section - 1)])[indexPath.row];
 	
 	if (item) {
-		NSURL * fileURL = [_project.library URLForItem:item];
-		//NSString * path = [_project.library pathForItem:item];
 		
+		BOOL success = NO;
+		if ([item.type isEqualToString:kItemTypeWebURL]) {
+			NSString * path = [_project.library URLForItem:item].path;
+			NSString * content = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+			if (content) {
+				NSURL * url = [NSURL URLWithString:content];
+				if (url) {
+					success = [[NSWorkspace sharedWorkspace] openURL:url];
+				}
+			}
+		} else {
+			NSURL * fileURL = [_project.library URLForItem:item];
 #if _SANDBOX_SUPPORTED_
-		[fileURL startAccessingSecurityScopedResource];
+			[fileURL startAccessingSecurityScopedResource];
 #endif
-		BOOL success = [[NSWorkspace sharedWorkspace] openURL:fileURL];
-		
+			success = [[NSWorkspace sharedWorkspace] openURL:fileURL];
+			
 #if _SANDBOX_SUPPORTED_
-		[fileURL stopAccessingSecurityScopedResource];
+			[fileURL stopAccessingSecurityScopedResource];
 #endif
+		}
 		if (!success) {
-			NSAlert * alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:@"The file \"%@\" couldn't be openned.", fileURL.path]
+			NSAlert * alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:@"The file \"%@\" couldn't be openned.", item.filename]
 											  defaultButton:@"OK"
 											alternateButton:nil
 												otherButton:nil
@@ -1620,7 +1641,7 @@
 		if (pasteboardItems.count == 1) {
 			// @TODO: if plain text is dragged, create a file with the text content then use the file as index
 			
-			NSString * path = [(NSPasteboardItem *)pasteboardItems[0] filePath];
+			NSString * path = [(NSPasteboardItem *)pasteboardItems.firstObject filePath];
 			if (path) {
 				NSString * contentString = [[NSString alloc] initWithContentsOfFile:path usedEncoding:nil error:NULL];
 				return (contentString.length > 0);
@@ -1645,7 +1666,7 @@
 	 */
 	
 	NSPasteboardItem * item = nil;
-	if (items.count > 0) { item = items[0]; }
+	if (items.count > 0) { item = items.firstObject; }
 	
 	NSURL * volumeURL = nil;
 	[item.fileURL getResourceValue:&volumeURL forKey:NSURLVolumeURLKey error:NULL];
@@ -1674,7 +1695,7 @@
 	if ((showsIndexDescription || _editing) && indexPath.section == 1) {
 		if (pasteboardItems.count == 1) {
 			
-			NSString * path = [(NSPasteboardItem *)pasteboardItems[0] filePath];
+			NSString * path = [(NSPasteboardItem *)pasteboardItems.firstObject filePath];
 			if (path) {
 				[self saveTextIndexAction:nil]; // Save the old index file
 				[_project updateValue:path forKey:@"indexPath"];
@@ -2223,6 +2244,11 @@
 	if (indexPath)
 		return [self itemAtIndexPath:indexPath];
 	return nil;
+}
+
+- (void)dealloc
+{
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end

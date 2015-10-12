@@ -271,11 +271,11 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 
 @implementation NavigationBar
 
-@synthesize title = _title;
-@synthesize textField = _textField;
-@synthesize editable = _editable;
-@synthesize leftBarButton = _leftBarButton, rightBarButton = _rightBarButton;
-@synthesize delegate = _delegate;
+- (instancetype)init
+{
+	if ((self = [super init])) { }
+	return self;
+}
 
 - (BOOL)isFlipped
 {
@@ -286,22 +286,36 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 {
 	_title = title;
 	
+	if (!_titleLabel) {
+		CGFloat width = self.frame.size.width / 2.;
+		CGFloat height = self.frame.size.height / 2. + 4.;
+		NSRect frame = NSMakeRect(width / 2., height / 2. - 4., width, height);
+		_titleLabel = [[NSTextField alloc] initWithFrame:frame];
+		_titleLabel.autoresizingMask = (NSViewWidthSizable);
+		_titleLabel.editable = NO;
+		_titleLabel.bezeled = NO;
+		_titleLabel.alignment = NSCenterTextAlignment;
+		_titleLabel.font = [NSFont boldSystemFontOfSize:18.];
+		_titleLabel.textColor = [NSColor darkGrayColor];
+		_titleLabel.drawsBackground = NO;
+		[self addSubview:_titleLabel];
+	}
+	_titleLabel.stringValue = _title;
+	
 	if (!_textField) {
 		CGFloat width = self.frame.size.width / 2.;
 		CGFloat height = self.frame.size.height / 2. + 4.;
 		NSRect frame = NSMakeRect(width / 2., height / 2. - 4., width, height);
 		_textField = [[NSTextField alloc] initWithFrame:frame];
 		_textField.autoresizingMask = (NSViewWidthSizable);
-		[_textField setEditable:YES];
-		[_textField setBezeled:YES];
+		_textField.editable = YES;
+		_textField.bezeled = YES;
 		_textField.alignment = NSCenterTextAlignment;
 		_textField.font = [NSFont boldSystemFontOfSize:16.];
 		_textField.drawsBackground = YES;
 		_textField.delegate = self;
-		
-		[_textField setHidden:YES];
-		
 		[self addSubview:_textField];
+		[_textField setHidden:YES];
 	}
 	
 	_textField.stringValue = _title;
@@ -312,6 +326,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 	_editable = editable;
 	
 	_textField.hidden = !(editable); // Show the TextField when editable
+	_titleLabel.hidden = !(_textField.hidden);
 }
 
 - (BOOL)control:(NSControl *)control textShouldEndEditing:(NSText *)fieldEditor
@@ -410,12 +425,16 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 
 - (void)setLeftBarButton:(NavigationBarButton *)leftBarButton
 {
-	self.leftBarButtons = @[ leftBarButton ];
+	if (leftBarButton) {
+		self.leftBarButtons = @[ leftBarButton ];
+	}
 }
 
 - (void)setRightBarButton:(NavigationBarButton *)rightBarButton
 {
-	self.rightBarButtons = @[ rightBarButton ];
+	if (rightBarButton) {
+		self.rightBarButtons = @[ rightBarButton ];
+	}
 }
 
 #define kButtonMargin 10.
@@ -480,35 +499,6 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 		CGContextTranslateCTM(context, self.bounds.size.width, self.bounds.size.height);
 		CGContextRotateCTM(context, M_PI);
 		CGContextDrawImage(context, self.bounds, backgroundImage);
-	}
-	[NSGraphicsContext restoreGraphicsState];
-	
-	/* Draw the title */
-	[NSGraphicsContext saveGraphicsState];
-	{
-		CGContextSetTextMatrix(context, CGAffineTransformMakeScale(1., -1.)); // Flip the text from the actual not flipped view setting (flipping by the y axis)
-		
-		const CGFloat fontHeight = 18.;
-		NSString * systemFontName = [NSFont boldSystemFontOfSize:10.].fontName;
-		CGContextSelectFont(context, systemFontName.UTF8String, fontHeight, kCGEncodingMacRoman);
-		
-		const char * string = _title.UTF8String;
-		const unsigned long length = strlen(string);
-		
-		CGPoint oldPosition = CGContextGetTextPosition(context);
-		CGContextSetTextDrawingMode(context, kCGTextInvisible); // Draw the text invisible to get the position
-		CGContextShowTextAtPoint(context, oldPosition.x, oldPosition.y, string, length);
-		CGPoint newPosition = CGContextGetTextPosition(context); // Get the position
-		
-		CGSize textSize = CGSizeMake(newPosition.x - oldPosition.x, newPosition.y - oldPosition.y);
-		
-		CGFloat textX = self.bounds.size.width / 2. - textSize.width / 2.;
-		CGFloat textY = self.bounds.size.height / 1.5;
-		
-		[[NSColor darkGrayColor] setFill];
-		CGContextSetTextDrawingMode(context, kCGTextFill);
-		
-		CGContextShowTextAtPoint(context, textX, textY, string, length);
 	}
 	[NSGraphicsContext restoreGraphicsState];
 }

@@ -42,6 +42,8 @@ typedef NS_ENUM(NSUInteger, NavigationBarButtonType) {
 
 @property (nonatomic, strong) NavigationBar * navigationBar;
 
+- (instancetype)initWithFrame:(NSRect)frameRect UNAVAILABLE_ATTRIBUTE;
+- (instancetype)initWithCoder:(NSCoder *)coder UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithType:(NavigationBarButtonType)type target:(id)target action:(SEL)action NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithTitle:(NSString *)title target:(id)target action:(SEL)action NS_DESIGNATED_INITIALIZER;
 
@@ -54,7 +56,7 @@ typedef NS_ENUM(NSUInteger, NavigationBarButtonType) {
 }
 
 @property (nonatomic, strong) NSString * title;
-@property (nonatomic, readonly) NSTextField * textField;
+@property (nonatomic, readonly) NSTextField * titleLabel, * textField;
 @property (nonatomic, assign) BOOL editable;
 @property (nonatomic, strong) NavigationBarButton * leftBarButton, * rightBarButton;
 @property (nonatomic, strong) NSArray * leftBarButtons, * rightBarButtons; // Array of NavigationBarButton objects

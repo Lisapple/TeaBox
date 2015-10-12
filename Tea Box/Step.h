@@ -25,6 +25,7 @@
 + (NSArray *)stepsWithProjectIdentifier:(int)projectID fromLibrary:(TBLibrary *)library;
 + (Step *)stepWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library;
 
+- (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithName:(NSString *)name description:(NSString *)description project:(Project *)project;
 - (instancetype)initWithName:(NSString *)name description:(NSString *)description closed:(BOOL)closed identifier:(int)identifier project:(Project *)project NS_DESIGNATED_INITIALIZER;
 - (BOOL)insertIntoLibrary:(TBLibrary *)library;

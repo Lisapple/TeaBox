@@ -28,6 +28,7 @@
 + (NSArray *)allProjectsFromLibrary:(TBLibrary *)library;
 + (Project *)projectWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library;
 
+- (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithName:(NSString *)name description:(NSString *)description priority:(int)priority identifier:(int)identifier NS_DESIGNATED_INITIALIZER;
 - (BOOL)insertIntoLibrary:(TBLibrary *)library;
 

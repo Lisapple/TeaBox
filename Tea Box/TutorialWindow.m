@@ -56,13 +56,17 @@
 
 - (void)close
 {
-	self.completionHandler(_choosenURL, (_choosenURL == nil));
+	if (self.completionHandler) {
+		self.completionHandler(_choosenURL, (_choosenURL == nil));
+	}
 	[super close];
 }
 
 - (IBAction)skipOrDoneAction:(id)sender
 {
-	self.completionHandler(_choosenURL, (_choosenURL == nil));
+	if (self.completionHandler) {
+		self.completionHandler(_choosenURL, (_choosenURL == nil));
+	}
 	[self orderOut:nil];
 }
 

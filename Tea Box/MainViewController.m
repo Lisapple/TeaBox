@@ -45,7 +45,7 @@
 {
 	[super loadView];
 	
-	priorityNames = @[@"None", @"Low", @"Normal", @"High"];
+	priorityNames = @[ @"None", @"Low", @"Normal", @"High" ];
 	
 	_navigationBar.title = @"Tea Box";
 	
@@ -54,12 +54,9 @@
 	self.tableView.rowHeight = 24.;
 	[self reloadData];
 	
-	NavigationBarButton * newProjectButton = [[NavigationBarButton alloc] initWithTitle:@"New Project"
-																				 target:self
-																				 action:@selector(newProjectAction:)];
-	_navigationBar.rightBarButton = newProjectButton;
-	
-	[_navigationBar.rightBarButton registerForDraggedTypes:@[NSFilenamesPboardType]]; // Add others types of dragging item
+	_navigationBar.rightBarButton = [[NavigationBarButton alloc] initWithTitle:@"New Project"
+																		target:self action:@selector(newProjectAction:)];
+	[_navigationBar.rightBarButton registerForDraggedTypes:@[ NSFilenamesPboardType ]]; // Add others types of dragging item
 	
 	[[NSNotificationCenter defaultCenter] addObserverForName:NSControlTextDidChangeNotification
 												  usingBlock:^(NSNotification *notification) {
@@ -106,7 +103,6 @@
 			}
 		}
 	} while (exists);
-	
 	
 	return projectName;
 }

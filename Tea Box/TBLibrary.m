@@ -46,7 +46,7 @@ static NSMutableDictionary * _libraries = nil; // Node: Actually, only one libra
 		
 		if (!path) { // If no bookmark data, look at "~/Document/Library.teaboxdb" (in sandbox container)
 			NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-			NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
+			NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
 			path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 		}
 		

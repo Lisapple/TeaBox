@@ -62,7 +62,7 @@
 					}
 				} else {
 					NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-					NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
+					NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
 					NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
 				}
@@ -115,7 +115,7 @@
 			} else if (returnCode == NSAlertAlternateReturn) {// "Create New"
 				/* Create a new library with a database get from the application bundle */
 				NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-				NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
+				NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
 				NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
 				
@@ -132,7 +132,7 @@
 		if (success) {
 			/* Use the default library but initialize the database */
 			NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-			NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
+			NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
 			NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 			[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
 		} else {
@@ -144,7 +144,7 @@
 			if ([alert runModal] == NSAlertDefaultReturn) {
 				/* Create a new library with a database get from the application bundle */
 				NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-				NSString * documentPath = (documentPaths.count > 0) ? documentPaths[0] : NSTemporaryDirectory();
+				NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
 				NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
 			} else {// "Quit"

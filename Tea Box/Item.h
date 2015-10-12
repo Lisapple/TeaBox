@@ -30,6 +30,7 @@ extern NSString * const kItemTypeUnkown;
 + (NSArray *)itemsWithStepIdentifier:(int)stepID fromLibrary:(TBLibrary *)library;
 + (Item *)itemWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library;
 
+- (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithFilename:(NSString *)filename type:(NSString *)type step:(Step *)step;
 - (instancetype)initWithFilename:(NSString *)filename type:(NSString *)type rowIndex:(int)rowIndex identifier:(int)identifier step:(Step *)step NS_DESIGNATED_INITIALIZER;
 - (BOOL)insertIntoLibrary:(TBLibrary *)library;

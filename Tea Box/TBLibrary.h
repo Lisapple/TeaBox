@@ -28,6 +28,7 @@
 + (TBLibrary *)createLibraryWithName:(NSString *)name atPath:(NSString *)path isSharedLibrary:(BOOL)shared;
 + (TBLibrary *)libraryWithName:(NSString *)name;
 
+- (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithPath:(NSString *)path isSharedLibrary:(BOOL)shared NS_DESIGNATED_INITIALIZER;
 - (sqlite3 *)database NS_RETURNS_INNER_POINTER;
 - (void)close;
