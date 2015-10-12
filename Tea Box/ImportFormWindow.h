@@ -14,7 +14,7 @@
 @protocol ImportFormWindowDelegate <NSObject>
 
 @optional
-- (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object;
+- (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object ofType:(NSString *)itemType proposedFilename:(NSString *)filename;
 - (void)importFormWindowDidCancel:(ImportFormWindow *)window;
 
 @end
@@ -49,10 +49,6 @@
 
 
 @interface ImageImportFormWindow : ImportFormWindow <_ImportFormImageViewDelegate>
-{
-	NSURLConnection * _connection;
-	NSMutableData * receivedData;
-}
 
 @property (unsafe_unretained) IBOutlet _ImportFormImageView * imageView;
 @property (unsafe_unretained) IBOutlet NSProgressIndicator * progressIndicator;

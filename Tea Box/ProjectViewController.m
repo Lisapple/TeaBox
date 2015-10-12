@@ -935,7 +935,7 @@
 		modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
 }
 
-- (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object
+- (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object ofType:(NSString *)itemType proposedFilename:(NSString *)filename
 {
 	Step * step = window.target;
 	NSIndexPath * indexPath = nil;
@@ -951,38 +951,34 @@
 	}
 	
 	NSString * destinationPath = [_project.library pathForStepFolder:step];
-	NSString * filename = nil;
+	NSString * extension = ([itemType isEqualToString:kItemTypeImage]) ? @"png" : @"txt";
+	NSString * path = [NSString stringWithFormat:@"%@/%@.%@", destinationPath, filename, extension];
+	if (filename) {
+		filename = [self freeFilenameForPath:path];
+		path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
+	} else {
+		filename = [self freeDraggedFilenameForStep:step extension:extension];
+		path = [NSString stringWithFormat:@"%@/%@.%@", destinationPath, filename, extension];
+	}
 	
-	NSString * type = nil;
-	if (window == _imageImportFormWindow) {
-		type = kItemTypeImage;
-		filename = [self freeDraggedFilenameForStep:step extension:@"png"];
-		NSString * path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
-		
+	if ([itemType isEqualToString:kItemTypeImage]) {
 		NSArray * representations = ((NSImage *)object).representations;
 		if (representations.count == 0) return ;
-		NSData * data = [representations[0] representationUsingType:NSPNGFileType properties:@{}];
+		NSData * data = [representations.firstObject representationUsingType:NSPNGFileType properties:@{}];
 		[data writeToFile:path atomically:YES];
 		
-	} else if (window == _urlImportFormWindow) {
-		type = kItemTypeWebURL;
-		filename = [self freeDraggedFilenameForStep:step extension:@"txt"];
-		NSString * path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
+	} else if ([itemType isEqualToString:kItemTypeWebURL]) {
 		NSData * data = [((NSURL *)object).absoluteString dataUsingEncoding:NSUTF8StringEncoding];
 		[data writeToFile:path atomically:YES];
 		
-	} else if (window == _textImportFormWindow) {
-		type = kItemTypeText;
-		filename = [self freeDraggedFilenameForStep:step extension:@"rtf"];
-		NSString * path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
+	} else if ([itemType isEqualToString:kItemTypeText]) {
 		NSAttributedString * attributedString = (NSAttributedString *)object;
 		NSData * data = [attributedString RTFFromRange:NSMakeRange(0, attributedString.length)
 									documentAttributes:@{}];
 		[data writeToFile:path atomically:YES];
 	}
 	
-	Item * item = [[Item alloc] initWithFilename:filename type:type
-										rowIndex:-1 identifier:-1 step:step];
+	Item * item = [[Item alloc] initWithFilename:filename type:itemType step:step];
 	[item insertIntoLibrary:_project.library];
 	
 	[self reloadData];

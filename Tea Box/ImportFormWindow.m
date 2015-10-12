@@ -26,58 +26,60 @@
 
 @implementation _ImportFormImageView
 
-@synthesize image = _image;
 @synthesize delegate;
 
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
 	if ((self = [super initWithFrame:frameRect])) {
-		[self registerForDraggedTypes:@[@"public.image", @"public.url", NSPasteboardTypePNG, NSPasteboardTypeTIFF, NSPasteboardTypeString]];
+		[self registerForDraggedTypes:@[ @"public.image", @"public.url", NSPasteboardTypePNG, NSPasteboardTypeTIFF, NSPasteboardTypeString ]];
 		
-		imageView = [[NSImageView alloc] initWithFrame:self.bounds];
-		imageView.image = _image;
-		[imageView setEditable:NO];
-		imageView.imageFrameStyle = NSImageFrameGrayBezel;
-		[self addSubview:imageView];
+		self.editable = NO;
+		self.imageFrameStyle = NSImageFrameGrayBezel;
 	}
 	
 	return self;
 }
 
-- (void)setImage:(NSImage *)image
-{
-	_image = [image copy];
-	
-	imageView.image = _image;
-}
-
-- (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
-{
-	return [sender draggingSourceOperationMask];
-}
-
-- (BOOL)prepareForDragOperation:(id < NSDraggingInfo >)sender
+- (BOOL)acceptsFirstResponder
 {
 	return YES;
 }
 
-- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender
+- (BOOL)becomeFirstResponder
+{
+	return YES;
+}
+
+- (BOOL)canBecomeKeyView
+{
+	return YES;
+}
+
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
+{
+	return [sender draggingSourceOperationMask];
+}
+
+- (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender
+{
+	return YES;
+}
+
+- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
 	BOOL dragged = NO;
 	
 	NSPasteboard * pasteboard = [sender draggingPasteboard];
-	NSPasteboardItem * item = (pasteboard.pasteboardItems)[0];
-	NSString * bestType = [item availableTypeFromArray:@[@"public.image", @"public.url", NSPasteboardTypePNG, NSPasteboardTypeTIFF, NSPasteboardTypeString]];
+	NSPasteboardItem * item = pasteboard.pasteboardItems.firstObject;
+	NSString * bestType = [item availableTypeFromArray:@[ @"public.image", @"public.url", NSPasteboardTypePNG, NSPasteboardTypeTIFF, NSPasteboardTypeString ]];
 	
-	if (UTTypeConformsTo((__bridge CFStringRef)bestType, CFSTR("public.image"))) {// Images from browser (or else), not on disk
+	if (UTTypeConformsTo((__bridge CFStringRef)bestType, CFSTR("public.image"))) { // Images from browser (or else), not on disk
 		
 		NSData * imageData = [item dataForType:bestType];
-		NSImage * image = [[NSImage alloc] initWithData:imageData];
-		self.image = image;
-		
+		self.image = [[NSImage alloc] initWithData:imageData];
 		dragged = (self.image != nil);
 		
-	} else if ([bestType isEqualToString:@"public.url"] || [bestType isEqualToString:NSPasteboardTypeString]){// Web URL
+	} else if ([@[ @"public.url", NSPasteboardTypeString ] containsObject:bestType]) { // Web URL
 		
 		NSString * webURLString = [item stringForType:bestType];
 		NSURL * imageURL = [NSURL URLWithString:webURLString];
@@ -85,36 +87,36 @@
 			if ([self.delegate respondsToSelector:@selector(importFormImageView:didReceivedURL:)])
 				[self.delegate importFormImageView:self didReceivedURL:imageURL];
 		}
-		
 		dragged = (imageURL != nil);
 	}
-	
 	return dragged;
 }
 
 @end
 
 
+@interface ImageImportFormWindow ()
+
+@property (nonatomic, strong) NSURLConnection * connection;
+@property (nonatomic, strong) NSMutableData * receivedData;
+@property (nonatomic, strong) NSURL * imageURL;
+
+@end
+
 @implementation ImageImportFormWindow
 
-@synthesize imageView = _imageView;
-@synthesize progressIndicator = _progressIndicator;
-@synthesize descriptionLabel = _descriptionLabel;
-
-- (instancetype)initWithCoder:(NSCoder *)aDecoder
+- (BOOL)makeFirstResponder:(nullable NSResponder *)aResponder
 {
-    if ((self = [super initWithCoder:aDecoder])) {
-    }
-    
-    return self;
+	_imageView.delegate = self;
+	return [super makeFirstResponder:aResponder];
 }
 
 - (IBAction)okAction:(id)sender
 {
 	_descriptionLabel.stringValue = @"";
 	
-	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:)]) {
-		[self.importDelegate importFormWindow:self didEndWithObject:_imageView.image];
+	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
+		[self.importDelegate importFormWindow:self didEndWithObject:_imageView.image ofType:kItemTypeImage proposedFilename:_imageURL.lastPathComponent];
 	}
 	
 	[super okAction:sender];
@@ -146,7 +148,8 @@
 	_imageView.image = nil;
 	
 	/* Download the image asynchronously */
-	receivedData = [[NSMutableData alloc] initWithCapacity:(1024 * 1024 * 4)]; // 4 Mb sized
+	_imageURL = imageURL;
+	_receivedData = [[NSMutableData alloc] initWithCapacity:(1024 * 1024 * 4)]; // 4 Mb sized
 	
 	NSURLRequest * request = [[NSURLRequest alloc] initWithURL:imageURL];
 	_connection = [[NSURLConnection alloc] initWithRequest:request
@@ -156,36 +159,29 @@
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
-	/* Stop the spinning wheel */
-	[_progressIndicator stopAnimation:nil];
-	
-	[receivedData appendData:data];
+	[_receivedData appendData:data];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection
 {
 	// @TODO: Re-enable the "OK" button
 	
+	NSImage * image = [[NSImage alloc] initWithData:_receivedData];
+	if (image) {
+		_descriptionLabel.stringValue = @"";
+		_imageView.image = image;
+	} else {
+		_descriptionLabel.stringValue = @"The image can be downloaded.";
+	}
+	
 	/* Stop the spinning wheel */
 	[_progressIndicator stopAnimation:nil];
-	
-	
-	NSImage * image = [[NSImage alloc] initWithData:receivedData];
-	
-	if (!image) {
-		_descriptionLabel.stringValue = @"The image can be downloaded.";
-	} else {
-		_descriptionLabel.stringValue = @"";
-		
-		_imageView.image = image;
-	}
 }
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
 	/* Stop the spinning wheel */
 	[_progressIndicator stopAnimation:nil];
-	
 	
 	_descriptionLabel.stringValue = error.localizedDescription;
 }
@@ -234,8 +230,8 @@
 	NSURL * webURL = [self URLFromString:_inputTextField.stringValue];
 	
 	if (webURL) {
-		if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:)]) {
-			[self.importDelegate importFormWindow:self didEndWithObject:webURL];
+		if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
+			[self.importDelegate importFormWindow:self didEndWithObject:webURL ofType:kItemTypeWebURL proposedFilename:webURL.lastPathComponent];
 		}
 		
 		[super okAction:sender];
@@ -261,8 +257,13 @@
 
 - (IBAction)okAction:(id)sender
 {
-	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:)]) {
-		[self.importDelegate importFormWindow:self didEndWithObject:_inputTextView.attributedString];
+	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
+		NSAttributedString * attrString = _inputTextView.attributedString;
+		// Get five first words from text as filename
+		NSArray * words = [attrString.string componentsSeparatedByString:@" "];
+		NSRange range = NSMakeRange(0, MIN(words.count, 5));
+		NSString * filename = [[words subarrayWithRange:range] componentsJoinedByString:@" "];
+		[self.importDelegate importFormWindow:self didEndWithObject:attrString ofType:kItemTypeText proposedFilename:filename];
 	}
 	
 	[super okAction:sender];
