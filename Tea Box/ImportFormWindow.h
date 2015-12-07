@@ -37,7 +37,7 @@
 @protocol _ImportFormImageViewDelegate <NSObject>
 
 - (void)importFormImageView:(_ImportFormImageView *)imageView didReceivedURL:(NSURL *)imageURL;
-- (void)importFormImageView:(_ImportFormImageView *)imageView didReceivedImage:(NSImage *)image;
+- (void)importFormImageView:(_ImportFormImageView *)imageView didReceivedImage:(NSImage *)image fromFileURL:(NSURL *)fileURL;
 
 @end
 

@@ -45,8 +45,9 @@
 	if (selectedURL) {
 		_pathControl.enabled = NO;
 		NSString * libraryName = [TBLibrary defaultLibrary].path.lastPathComponent;
+		NSError * error = nil;
 		[[TBLibrary defaultLibrary] moveLibraryToPath:[selectedURL.path stringByAppendingFormat:@"/%@", libraryName]
-												error:NULL];
+												error:&error];
 		_pathControl.enabled = YES;
 	}
 }

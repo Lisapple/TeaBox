@@ -7,6 +7,7 @@
 //
 
 #import "ImportFormWindow.h"
+#import <TBIndexParser/NSPasteboardItem+additions.h>
 
 @implementation ImportFormWindow
 
@@ -71,23 +72,27 @@
 	
 	NSPasteboard * pasteboard = [sender draggingPasteboard];
 	NSPasteboardItem * item = pasteboard.pasteboardItems.firstObject;
-	NSString * bestType = [item availableTypeFromArray:@[ @"public.image", @"public.url", NSPasteboardTypePNG, NSPasteboardTypeTIFF, NSPasteboardTypeString ]];
+	NSString * bestType = [item availableTypeFromArray:@[ @"public.image", NSPasteboardTypePNG, NSPasteboardTypeTIFF, NSPasteboardTypeString,
+														  @"public.url", @"public.file-url" ]];
 	
 	if (UTTypeConformsTo((__bridge CFStringRef)bestType, CFSTR("public.image"))) { // Images from browser (or else), not on disk
-		
 		NSData * imageData = [item dataForType:bestType];
 		self.image = [[NSImage alloc] initWithData:imageData];
 		dragged = (self.image != nil);
 		
 	} else if ([@[ @"public.url", NSPasteboardTypeString ] containsObject:bestType]) { // Web URL
-		
 		NSString * webURLString = [item stringForType:bestType];
 		NSURL * imageURL = [NSURL URLWithString:webURLString];
-		if (imageURL) {
-			if ([self.delegate respondsToSelector:@selector(importFormImageView:didReceivedURL:)])
-				[self.delegate importFormImageView:self didReceivedURL:imageURL];
-		}
+		if (imageURL && [self.delegate respondsToSelector:@selector(importFormImageView:didReceivedURL:)])
+			[self.delegate importFormImageView:self didReceivedURL:imageURL];
 		dragged = (imageURL != nil);
+		
+	} else if ([bestType isEqualToString:@"public.file-url"]) {
+		NSURL * fileURL = [item fileURL];
+		self.image = [[NSImage alloc] initWithContentsOfFile:fileURL.path];
+		dragged = (self.image != nil);
+		if (self.image && [self.delegate respondsToSelector:@selector(importFormImageView:didReceivedImage:fromFileURL:)])
+			[self.delegate importFormImageView:self didReceivedImage:self.image fromFileURL:fileURL];
 	}
 	return dragged;
 }
@@ -124,9 +129,9 @@
 
 #pragma mark - Import Image View Delegate
 
-- (void)importFormImageView:(_ImportFormImageView *)imageView didReceivedImage:(NSImage *)image
+- (void)importFormImageView:(_ImportFormImageView *)imageView didReceivedImage:(NSImage *)image fromFileURL:(NSURL *)fileURL
 {
-	// Do nothing
+	_imageURL = fileURL;
 }
 
 - (void)importFormImageView:(_ImportFormImageView *)imageView didReceivedURL:(NSURL *)imageURL

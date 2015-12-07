@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		11A1AC2A169C71B700AA499D /* ApplicationPreferencesWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 11A1AC29169C71B700AA499D /* ApplicationPreferencesWindow.m */; };
-		5007A4F41BBD454000BA4ED7 /* TutorialWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 5007A4F31BBD454000BA4ED7 /* TutorialWindow.m */; settings = {ASSET_TAGS = (); }; };
+		5007A4F41BBD454000BA4ED7 /* TutorialWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 5007A4F31BBD454000BA4ED7 /* TutorialWindow.m */; };
 		50082C8218A2EF6200021E1C /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50082C8118A2EF6200021E1C /* libsqlite3.dylib */; };
 		500C2843161DED6000652839 /* MainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 500C2841161DED6000652839 /* MainViewController.m */; };
 		500C2844161DED6000652839 /* MainViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 500C2842161DED6000652839 /* MainViewController.xib */; };
@@ -20,9 +20,9 @@
 		50143FE21636E4C40086B8C4 /* default-database.sqlite3 in Resources */ = {isa = PBXBuildFile; fileRef = 50143FE11636E4C40086B8C4 /* default-database.sqlite3 */; };
 		50158FDF163C5596000730B6 /* NSInputStream+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50158FDD163C5596000730B6 /* NSInputStream+additions.m */; };
 		50158FE0163C5596000730B6 /* NSOutputStream+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50158FDE163C5596000730B6 /* NSOutputStream+additions.m */; };
-		5015C5DB1BBCAD620044D059 /* AboutWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 5015C5DA1BBCAD620044D059 /* AboutWindow.m */; settings = {ASSET_TAGS = (); }; };
-		5015C5DF1BBCB1B80044D059 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5015C5DE1BBCB1B80044D059 /* Images.xcassets */; settings = {ASSET_TAGS = (); }; };
-		5015C5E31BBCB3B50044D059 /* document-icon.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 5015C5E21BBCB3B50044D059 /* document-icon.iconset */; settings = {ASSET_TAGS = (); }; };
+		5015C5DB1BBCAD620044D059 /* AboutWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 5015C5DA1BBCAD620044D059 /* AboutWindow.m */; };
+		5015C5DF1BBCB1B80044D059 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5015C5DE1BBCB1B80044D059 /* Images.xcassets */; };
+		5015C5E31BBCB3B50044D059 /* document-icon.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 5015C5E21BBCB3B50044D059 /* document-icon.iconset */; };
 		50271C4F1653F841009687E6 /* DefaultDragOperationWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 50271C4E1653F841009687E6 /* DefaultDragOperationWindow.m */; };
 		502A03CA165564BC004CDF08 /* Project+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 502A03C9165564BC004CDF08 /* Project+additions.m */; };
 		502A03CE165564D0004CDF08 /* Step+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 502A03CD165564D0004CDF08 /* Step+additions.m */; };
@@ -331,6 +331,11 @@
 				TargetAttributes = {
 					50588748161CB2C100B44D06 = {
 						DevelopmentTeam = 79MVQZ8SAR;
+						SystemCapabilities = {
+							com.apple.Sandbox = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};

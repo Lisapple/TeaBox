@@ -124,22 +124,11 @@
 	
 	NSString * path = _project.indexPath;
 	if (path.length > 0) {
-		
-#if _SANDBOX_SUPPORTED_
-		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-		NSData * bookmarkData = [userDefaults objectForKey:path];
-		
-		NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
-													options:NSURLBookmarkResolutionWithSecurityScope
-											  relativeToURL:nil
-										bookmarkDataIsStale:nil
-													  error:NULL];
-		[fileURL startAccessingSecurityScopedResource];
-		[_indexWebView loadIndexAtURL:fileURL];
-		[fileURL stopAccessingSecurityScopedResource];
-#else
-		[_indexWebView loadIndexAtPath:path];
-#endif
+		[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+			if (!error) {
+				[_indexWebView loadIndexAtPath:path];
+			}
+		}];
 	}
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidResize:)
@@ -193,22 +182,11 @@
 	if (_project) {
 		NSString * path = _project.indexPath;
 		if (path.length > 0) {
-			
-#if _SANDBOX_SUPPORTED_
-			NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-			NSData * bookmarkData = [userDefaults objectForKey:path];
-			
-			NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
-														options:NSURLBookmarkResolutionWithSecurityScope
-												  relativeToURL:nil
-											bookmarkDataIsStale:nil
-														  error:NULL];
-			[fileURL startAccessingSecurityScopedResource];
-			[_indexWebView loadIndexAtURL:fileURL];
-			[fileURL stopAccessingSecurityScopedResource];
-#else
-			[_indexWebView loadIndexAtPath:path];
-#endif
+			[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+				if (!error) {
+					[_indexWebView loadIndexAtPath:path];
+				}
+			}];
 		}
 		
 		[self reloadData];
@@ -554,13 +532,15 @@
 	Item * item = [self itemAtIndexPath:self.tableView.indexPathOfSelectedRow];
 	NSString * path = [_project.library pathForItem:item];
 	if ([item.type isEqualToString:kItemTypeWebURL]) {
-		NSString * content = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
-		if (content) {
-			NSURL * url = [NSURL URLWithString:content];
-			if (url) {
-				[[NSWorkspace sharedWorkspace] openURL:url];
+		[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+			if (!error) {
+				NSString * content = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+				if (content) {
+					NSURL * url = [NSURL URLWithString:content];
+					[[NSWorkspace sharedWorkspace] openURL:url];
+				}
 			}
-		}
+		}];
 	} else {
 		[[NSWorkspace sharedWorkspace] openFile:path];
 	}
@@ -569,17 +549,14 @@
 - (IBAction)showInFinderAction:(id)sender
 {
 	Item * item = [self itemAtIndexPath:self.tableView.indexPathOfSelectedRow];
-	NSURL * fileURL = [_project.library URLForItem:item];
-	
-#if _SANDBOX_SUPPORTED_
-	[fileURL startAccessingSecurityScopedResource];
-#endif
-	
-	[[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[fileURL]];
-	
-#if _SANDBOX_SUPPORTED_
-	[fileURL stopAccessingSecurityScopedResource];
-#endif
+	[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+		if (!error) {
+			NSURL * fileURL = [_project.library URLForItem:item];
+			if (fileURL) {
+				[[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[fileURL]];
+			}
+		}
+	}];
 }
 
 - (IBAction)copyToPasteboardSelectedItemAction:(id)sender
@@ -590,24 +567,28 @@
 	
 	NSPasteboard * pasteboard = [NSPasteboard generalPasteboard];
 	[pasteboard clearContents];
-	BOOL success = NO;
+	__block BOOL success = NO;
 	
-	if ([item.type isEqualToString:kItemTypeImage]) {
-		
-		NSImage * image = [[NSImage alloc] initWithContentsOfFile:path];
-		success = [pasteboard writeObjects:@[image]];
-		
-	} else if ([item.type isEqualToString:kItemTypeText]) {
-		
-		NSAttributedString * attributedString = [[NSAttributedString alloc] initWithPath:path
-																	  documentAttributes:NULL];
-		success = [pasteboard writeObjects:@[attributedString]];
-		
-	} else if ([item.type isEqualToString:kItemTypeWebURL]) {
-		
-		NSString * content = [[NSString alloc] initWithContentsOfFile:path usedEncoding:nil error:NULL];
-		success = [pasteboard writeObjects:@[[NSURL URLWithString:content]]];
-	}
+	[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+		if (!error) {
+			if ([item.type isEqualToString:kItemTypeImage]) {
+				NSImage * image = [[NSImage alloc] initWithContentsOfFile:path];
+				if (image)
+					success = [pasteboard writeObjects:@[image]];
+				
+			} else if ([item.type isEqualToString:kItemTypeText]) {
+				NSAttributedString * attributedString = [[NSAttributedString alloc] initWithPath:path
+																			  documentAttributes:NULL];
+				if (attributedString)
+					success = [pasteboard writeObjects:@[attributedString]];
+				
+			} else if ([item.type isEqualToString:kItemTypeWebURL]) {
+				NSString * content = [[NSString alloc] initWithContentsOfFile:path usedEncoding:nil error:NULL];
+				if (content)
+					success = [pasteboard writeObjects:@[[NSURL URLWithString:content]]];
+			}
+		}
+	}];
 	
 	if (!success) {
 		NSLog(@"Error when adding data to pasteboard");
@@ -626,10 +607,14 @@
 					  completionHandler:^(NSInteger result) {
 						  if (result == NSFileHandlingPanelOKButton) {
 							  NSString * destinationPath = savePanel.URL.path;
-							  NSError * error = nil;
-							  BOOL success = [[NSFileManager defaultManager] copyItemAtPath:path toPath:destinationPath error:&error];
-							  if (!success)
-								  [NSApp presentError:error];
+							  [SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+								  if (!error) {
+									  NSError * copyError = nil;
+									  BOOL success = [[NSFileManager defaultManager] copyItemAtPath:path toPath:destinationPath error:&copyError];
+									  if (!success)
+										  [NSApp presentError:copyError];
+								  }
+							  }];
 						  }
 					  }];
 }
@@ -853,8 +838,8 @@
 #else
 		[_indexWebView loadIndexAtURL:[NSURL fileURLWithPath:path]];
 #endif
+		[self.tableView reloadDataForSection:1];
 	}
-	[self.tableView reloadDataForSection:1];
 }
 
 - (IBAction)saveTextIndexAction:(id)sender
@@ -951,8 +936,15 @@
 	}
 	
 	NSString * destinationPath = [_project.library pathForStepFolder:step];
-	NSString * extension = ([itemType isEqualToString:kItemTypeImage]) ? @"png" : @"txt";
-	NSString * path = [NSString stringWithFormat:@"%@/%@.%@", destinationPath, filename, extension];
+	
+	NSString * extension = ([itemType isEqualToString:kItemTypeWebURL]) ? @"txt" : @"rtf";
+	if ([itemType isEqualToString:kItemTypeImage]) {
+		extension = ([filename.lastPathComponent rangeOfString:@"."].location == NSNotFound) ? @"png" : nil;
+	}
+	NSString * path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
+	if (extension) {
+		path = [path stringByAppendingFormat:@".%@", extension];
+	}
 	if (filename) {
 		filename = [self freeFilenameForPath:path];
 		path = [NSString stringWithFormat:@"%@/%@", destinationPath, filename];
@@ -961,22 +953,26 @@
 		path = [NSString stringWithFormat:@"%@/%@.%@", destinationPath, filename, extension];
 	}
 	
-	if ([itemType isEqualToString:kItemTypeImage]) {
-		NSArray * representations = ((NSImage *)object).representations;
-		if (representations.count == 0) return ;
-		NSData * data = [representations.firstObject representationUsingType:NSPNGFileType properties:@{}];
-		[data writeToFile:path atomically:YES];
-		
-	} else if ([itemType isEqualToString:kItemTypeWebURL]) {
-		NSData * data = [((NSURL *)object).absoluteString dataUsingEncoding:NSUTF8StringEncoding];
-		[data writeToFile:path atomically:YES];
-		
-	} else if ([itemType isEqualToString:kItemTypeText]) {
-		NSAttributedString * attributedString = (NSAttributedString *)object;
-		NSData * data = [attributedString RTFFromRange:NSMakeRange(0, attributedString.length)
-									documentAttributes:@{}];
-		[data writeToFile:path atomically:YES];
-	}
+	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+		if (!error) {
+			if ([itemType isEqualToString:kItemTypeImage]) {
+				NSArray * representations = ((NSImage *)object).representations;
+				if (representations.count == 0) return ;
+				NSData * data = [representations.firstObject representationUsingType:NSPNGFileType properties:@{}];
+				[data writeToFile:path atomically:YES];
+				
+			} else if ([itemType isEqualToString:kItemTypeWebURL]) {
+				NSData * data = [((NSURL *)object).absoluteString dataUsingEncoding:NSUTF8StringEncoding];
+				[data writeToFile:path atomically:YES];
+				
+			} else if ([itemType isEqualToString:kItemTypeText]) {
+				NSAttributedString * attributedString = (NSAttributedString *)object;
+				NSData * data = [attributedString RTFFromRange:NSMakeRange(0, attributedString.length)
+											documentAttributes:@{}];
+				[data writeToFile:path atomically:YES];
+			}
+		}
+	}];
 	
 	Item * item = [[Item alloc] initWithFilename:filename type:itemType step:step];
 	[item insertIntoLibrary:_project.library];
@@ -1327,28 +1323,27 @@
 		NSInteger index = [types indexOfObject:item.type];
 		cell.image = typeImages[index];
 		cell.selectedImage = typeSelectedImages[index];
+		cell.textField.textColor = [NSColor blackColor];
 		
 		if ([item.type isEqualToString:kItemTypeText]) { // Text
-			if (path) {
-				NSAttributedString * attributedString = [[NSAttributedString alloc] initWithPath:path documentAttributes:NULL];
-				cell.title = (attributedString) ? [attributedString.string stringByReplacingOccurrencesOfString:@"\n" withString:@" "] : @"";
-			}
-			else {
-				cell.title = @"File not found";
-				cell.textField.textColor = [NSColor grayColor];
-			}
-			
-			
+			[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+				if (!error) {
+					NSAttributedString * attributedString = [[NSAttributedString alloc] initWithPath:path documentAttributes:NULL];
+					cell.title = (attributedString) ? [attributedString.string stringByReplacingOccurrencesOfString:@"\n" withString:@" "] : @"";
+				} else {
+					cell.title = @"File not found";
+					cell.textField.textColor = [NSColor grayColor];
+				}
+			}];
 		} else if ([item.type isEqualToString:kItemTypeWebURL]) { // URL
-
-			if (path) {
-				cell.title = [[NSString alloc] initWithContentsOfFile:path usedEncoding:nil error:NULL];
-			}
-			else {
-				cell.title = @"File not found";
-				cell.textField.textColor = [NSColor grayColor];
-			}
-			
+			[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+				if (!error) {
+					cell.title = [[NSString alloc] initWithContentsOfFile:path usedEncoding:nil error:NULL];
+				} else {
+					cell.title = @"File not found";
+					cell.textField.textColor = [NSColor grayColor];
+				}
+			}];
 		} else { // Image and File
 			
 			NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
@@ -1364,22 +1359,16 @@
 					cell.textField.cell.attributedStringValue = mutableString;
 				}
 			} else {
-				NSString * path = [item.library pathForItem:item];
 				cell.title = (path) ? path.lastPathComponent : @"???";
 			}
 			
-			
-#if _SANDBOX_SUPPORTED_
-			if (path) [[NSURL fileURLWithPath:path] startAccessingSecurityScopedResource];
-#endif
-			
-			if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-				cell.textField.textColor = [NSColor grayColor];
-			}
-			
-#if _SANDBOX_SUPPORTED_
-			if (path) [[NSURL fileURLWithPath:path] stopAccessingSecurityScopedResource];
-#endif
+			__block BOOL fileExists = NO;
+			[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+				if (!error) {
+					fileExists = [[NSFileManager defaultManager] fileExistsAtPath:path];
+				}
+			}];
+			cell.textField.textColor = (fileExists) ? [NSColor blackColor] : [NSColor grayColor];
 		}
 		
 		cell.colorStyle = (indexPath.row % 2)? TableViewCellBackgroundColorStyleGray : TableViewCellBackgroundColorStyleWhite;
@@ -1453,27 +1442,27 @@
 		item = (Item *)((NSArray *)itemsArray[(indexPath.section - 1)])[indexPath.row];
 	
 	if (item) {
-		
-		BOOL success = NO;
+		__block BOOL success = NO;
 		if ([item.type isEqualToString:kItemTypeWebURL]) {
-			NSString * path = [_project.library URLForItem:item].path;
-			NSString * content = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
-			if (content) {
-				NSURL * url = [NSURL URLWithString:content];
-				if (url) {
-					success = [[NSWorkspace sharedWorkspace] openURL:url];
+			[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+				if (!error) {
+					NSString * path = [_project.library URLForItem:item].path;
+					NSString * content = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+					if (content) {
+						NSURL * url = [NSURL URLWithString:content];
+						if (url) {
+							success = [[NSWorkspace sharedWorkspace] openURL:url];
+						}
+					}
 				}
-			}
+			}];
 		} else {
-			NSURL * fileURL = [_project.library URLForItem:item];
-#if _SANDBOX_SUPPORTED_
-			[fileURL startAccessingSecurityScopedResource];
-#endif
-			success = [[NSWorkspace sharedWorkspace] openURL:fileURL];
-			
-#if _SANDBOX_SUPPORTED_
-			[fileURL stopAccessingSecurityScopedResource];
-#endif
+			[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+				if (!error) {
+					NSURL * fileURL = [_project.library URLForItem:item];
+					success = [[NSWorkspace sharedWorkspace] openURL:fileURL];
+				}
+			}];
 		}
 		if (!success) {
 			NSAlert * alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:@"The file \"%@\" couldn't be openned.", item.filename]
@@ -1481,10 +1470,7 @@
 											alternateButton:nil
 												otherButton:nil
 								  informativeTextWithFormat:@""];
-			[alert beginSheetModalForWindow:self.view.window
-							  modalDelegate:nil
-							 didEndSelector:NULL
-								contextInfo:nil];
+			[alert beginSheetModalForWindow:self.view.window modalDelegate:nil didEndSelector:NULL contextInfo:nil];
 		}
 	}
 }
@@ -1523,12 +1509,6 @@
 		Item * item = (Item *)((NSArray *)itemsArray[section])[indexPath.row];
 		NSString * path = [_project.library pathForItem:item];
 		
-#if _SANDBOX_SUPPORTED_
-		if (path) [[NSURL fileURLWithPath:path] startAccessingSecurityScopedResource];
-#endif
-		
-		BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path];
-		
 		/*
 		 * For "FILE": the menu contains "Open With {Default App}", "Show in Finder", "|", "Export...", "|", "Delete..."
 		 * For "FOLD": the menu contains "Show in Finder", "|", "Export...", "|", "Delete..."
@@ -1540,26 +1520,42 @@
 		 *		 If the file doesn't longer exist, just show "Item not found"
 		 */
 		
-		NSMenu * menu = [[NSMenu alloc] initWithTitle:@"tableview-menu"];
+		__block BOOL exist = NO;
+		[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+			if (!error) {
+				exist = [[NSFileManager defaultManager] fileExistsAtPath:path];
+			} }];
 		
+		NSMenu * menu = [[NSMenu alloc] initWithTitle:@"tableview-menu"];
 		if (exist) {
 			
 			/* Add the "Open with..." at the beginning of the menu */
-			NSURL * url = nil;
+			__block NSURL * url = nil;
 			if ([item.type isEqualToString:kItemTypeWebURL]) {// Web links
-				NSString * webURLString = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
-				url = [NSURL URLWithString:webURLString];
+				[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+					if (!error) {
+						NSString * webURLString = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+						if (webURLString) {
+							url = [NSURL URLWithString:webURLString];
+						}
+					} }];
 			} else {// Files, Images and Texts
 				url = [NSURL fileURLWithPath:path];
 			}
 			
-			NSString * defaultApplicationPath = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url].path;
+			__block NSString * defaultApplicationPath = nil;
+			[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+				if (!error) {
+					defaultApplicationPath = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url].path;
+				} }];
+			
 			if (defaultApplicationPath) {
 				/* -[NSWorkspace getInfoForFile:application:type:] returns the path to the application; retreive only the name of the application (i.e.: remove the path and ".app") */
 				NSString * defaultApplication = defaultApplicationPath.lastPathComponent.stringByDeletingPathExtension;
-				[menu addItemWithTitle:[NSString stringWithFormat:@"Open With %@", defaultApplication]
-								target:self
-								action:@selector(openWithDefaultApplicationAction:)];
+				if (![defaultApplication isEqualToString:@"Finder"]) { // Do not show "Open with Finder"
+					[menu addItemWithTitle:[NSString stringWithFormat:@"Open With %@", defaultApplication]
+									target:self action:@selector(openWithDefaultApplicationAction:)];
+				}
 			} else {
 				[menu addItemWithTitle:@"No Default Applications" target:self action:NULL]; // "NULL" to disable the item
 			}
@@ -1607,11 +1603,6 @@
 		
 		[menu addItem:[NSMenuItem separatorItem]];
 		[menu addItemWithTitle:@"Delete..." target:self action:@selector(deleteSelectedItemAction:)];
-		
-#if _SANDBOX_SUPPORTED_
-		if (path) [[NSURL fileURLWithPath:path] stopAccessingSecurityScopedResource];
-#endif
-		
 		return menu;
 	}
 	return nil;
@@ -1639,6 +1630,7 @@
 			
 			NSString * path = [(NSPasteboardItem *)pasteboardItems.firstObject filePath];
 			if (path) {
+				// It's dragged content, don't need to start sandbox access
 				NSString * contentString = [[NSString alloc] initWithContentsOfFile:path usedEncoding:nil error:NULL];
 				return (contentString.length > 0);
 			} else {
@@ -1695,8 +1687,7 @@
 			if (path) {
 				[self saveTextIndexAction:nil]; // Save the old index file
 				[_project updateValue:path forKey:@"indexPath"];
-				
-#if _SANDBOX_SUPPORTED_
+
 				NSURL * fileURL = [NSURL fileURLWithPath:path];
 				NSData * bookmarkData = [fileURL bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
 										  includingResourceValuesForKeys:nil
@@ -1705,12 +1696,11 @@
 				NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 				[userDefaults setObject:bookmarkData forKey:path];
 				
-				[fileURL startAccessingSecurityScopedResource];
-				[_indexWebView loadIndexAtURL:fileURL];
-				[fileURL stopAccessingSecurityScopedResource];
-#else
-				[_indexWebView loadIndexAtPath:path]; // Reload the webView with the new index file
-#endif
+				[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+					if (!error) {
+						[_indexWebView loadIndexAtPath:path]; // Reload the webView with the new index file
+					}
+				}];
 			}
 		}
 	} else {
@@ -1776,7 +1766,7 @@
 					
 				} else {// Text content
 					NSData * data = [item dataForType:bestType];
-					path = [NSString stringWithFormat:@"%@/%@", destinationPath, [self freeDraggedFilenameForStep:step extension:@"txt"]];
+					path = [NSString stringWithFormat:@"%@/%@", destinationPath, [self freeDraggedFilenameForStep:step extension:@"rtf"]];
 					[data writeToFile:path atomically:YES];
 					
 					itemType = kItemTypeText;
@@ -2192,14 +2182,16 @@
 	NSString * parentFolder = path.stringByDeletingLastPathComponent;
 	NSString * filename = path.lastPathComponent.stringByDeletingPathExtension;
 	NSString * extension = path.pathExtension;
-	
-	NSFileManager * fileManager = [[NSFileManager alloc] init];
-	int index = 2;
-	NSString * newFilename = filename;
-	while ([fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@/%@%@", parentFolder, newFilename, (extension.length > 0)? [NSString stringWithFormat:@".%@", extension]: @""]]) {
-		newFilename = [NSString stringWithFormat:@"%@ (%i)", filename, index++];
-	}
-	
+	__block NSString * newFilename = filename;
+	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+		if (!error) {
+			NSFileManager * fileManager = [[NSFileManager alloc] init];
+			int index = 2;
+			while ([fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@/%@%@", parentFolder, newFilename, (extension.length > 0)? [NSString stringWithFormat:@".%@", extension]: @""]]) {
+				newFilename = [NSString stringWithFormat:@"%@ (%i)", filename, index++];
+			}
+		}
+	}];
 	NSString * extensionFormat = (extension.length > 0)? [NSString stringWithFormat:@".%@", extension]: @"";
 	return [NSString stringWithFormat:@"%@%@", newFilename, extensionFormat];
 }
@@ -2219,12 +2211,16 @@
 
 - (NSImage *)previewPanel:(QLPreviewPanel *)panel transitionImageForPreviewItem:(id <QLPreviewItem>)item contentRect:(NSRect *)contentRect
 {
+	__block NSImage * image = nil;
 	if (item) {
 		NSString * path = [((Item *)item).library pathForItem:item];
-		return [[NSWorkspace sharedWorkspace] iconForFile:path];
+		[SandboxHelper executeWithSecurityScopedAccessToItem:item block:^(NSError * error) {
+			if (!error) {
+				image = [[NSWorkspace sharedWorkspace] iconForFile:path];
+			}
+		}];
 	}
-	
-	return nil;
+	return image;
 }
 
 #pragma mark - QLPreviewPanelDataSource

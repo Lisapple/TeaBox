@@ -7,6 +7,7 @@
 //
 
 #import "TBLibrary.h"
+#import "SandboxHelper.h"
 
 #define kDatabaseName "database"
 #define kBackupName "~database"
@@ -213,7 +214,7 @@ sqlite3 * init_db(const char path[])
 	return database;
 }
 
-- (BOOL)moveLibraryToPath:(NSString *)newPath error:(NSError **)error
+- (BOOL)moveLibraryToPath:(NSString *)newPath error:(NSError **)pError
 {
 	NSURL * fileURL = nil;
 	NSString * path = nil;
@@ -229,15 +230,21 @@ sqlite3 * init_db(const char path[])
 											options:bookmarkOptions
 									  relativeToURL:nil
 								bookmarkDataIsStale:NULL
-											  error:NULL];
+											  error:pError];
 		path = fileURL.path;
+	}
+	
+	if (!path) { // If no bookmark data, look at "~/Document/Library.teaboxdb" (in sandbox container)
+		NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
+		NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
+		path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 	}
 	
 #if _SANDBOX_SUPPORTED_
 	[fileURL startAccessingSecurityScopedResource];
 #endif
 	
-	BOOL success = [[NSFileManager defaultManager] moveItemAtPath:path toPath:newPath error:error];
+	BOOL success = [[NSFileManager defaultManager] moveItemAtPath:path toPath:newPath error:pError];
 	
 #if _SANDBOX_SUPPORTED_
 	[fileURL stopAccessingSecurityScopedResource];
@@ -253,11 +260,10 @@ sqlite3 * init_db(const char path[])
 		bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
 #endif
 		NSURL * fileURL = [NSURL fileURLWithPath:_path];
-		NSError * error = nil;
 		NSData * bookmarkData = [fileURL bookmarkDataWithOptions:bookmarkOptions
 								  includingResourceValuesForKeys:nil
 												   relativeToURL:nil // Use nil for app-scoped bookmark
-														   error:&error];
+														   error:pError];
 		
 		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 		if (bookmarkData)
@@ -284,35 +290,38 @@ sqlite3 * init_db(const char path[])
 - (NSString *)pathForProjectFolder:(Project *)project
 {
 	NSString * parentFolderPath = [NSString stringWithFormat:@"%@/Projects", self.path];
-	NSString * folderName = [NSString stringWithFormat:@"%i - %@", project.identifier, project.name];
+	__block NSString * folderName = [NSString stringWithFormat:@"%i - %@", project.identifier, project.name];
 	NSString * path = [NSString stringWithFormat:@"%@/%@", parentFolderPath, folderName];
 	
-	NSFileManager * manager = [[NSFileManager alloc] init];
-	if (![manager fileExistsAtPath:path]) {
-		folderName = nil;
-		NSDirectoryEnumerationOptions options = (NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsSubdirectoryDescendants);
-		NSDirectoryEnumerator * enumerator = [manager enumeratorAtURL:[NSURL fileURLWithPath:parentFolderPath]
-										   includingPropertiesForKeys:nil options:options errorHandler:NULL];
-		BOOL folderExists = NO;
-		int length = (int)ceil(log10(project.identifier));
-		for (NSURL * fileURL in enumerator) {
-			NSString * filename = fileURL.path.lastPathComponent;
-			if (filename.length > (length + 1)) {
-				int folderID = 0;
-				if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == project.identifier) {
-					/* Rename the folder with the new name */
-					[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
-					folderExists = YES;
-					break;
+	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+		if (!error) {
+			NSFileManager * manager = [[NSFileManager alloc] init];
+			if (![manager fileExistsAtPath:path]) {
+				folderName = nil;
+				NSDirectoryEnumerationOptions options = (NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsSubdirectoryDescendants);
+				NSDirectoryEnumerator * enumerator = [manager enumeratorAtURL:[NSURL fileURLWithPath:parentFolderPath]
+												   includingPropertiesForKeys:nil options:options errorHandler:NULL];
+				BOOL folderExists = NO;
+				int length = (int)ceil(log10(project.identifier));
+				for (NSURL * fileURL in enumerator) {
+					NSString * filename = fileURL.path.lastPathComponent;
+					if (filename.length > (length + 1)) {
+						int folderID = 0;
+						if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == project.identifier) {
+							/* Rename the folder with the new name */
+							[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
+							folderExists = YES;
+							break;
+						}
+					}
+				}
+				
+				if (!folderExists) {
+					[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
 				}
 			}
 		}
-		
-		if (!folderExists) {
-			[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
-		}
-	}
-	
+	}];
 	return path;
 }
 
@@ -322,33 +331,35 @@ sqlite3 * init_db(const char path[])
 	NSString * parentFolderPath = [self pathForProjectFolder:step.project];
 	NSString * folderName = [NSString stringWithFormat:@"%i - %@", step.identifier, step.name];
 	NSString * path = [NSString stringWithFormat:@"%@/%@", parentFolderPath, folderName];
-	
-	NSFileManager * manager = [[NSFileManager alloc] init];
-	if (![manager fileExistsAtPath:path]) {
-		NSDirectoryEnumerator * enumerator = [manager enumeratorAtURL:[NSURL fileURLWithPath:parentFolderPath]
-										   includingPropertiesForKeys:nil
-															  options:(NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsSubdirectoryDescendants)
-														 errorHandler:NULL];
-		BOOL folderExists = NO;
-		int length = (int)ceil(log10(step.identifier));
-		for (NSURL * fileURL in enumerator) {
-			NSString * filename = fileURL.path.lastPathComponent;
-			if (filename.length > (length + 1)) {
-				int folderID = 0;
-				if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == step.identifier) {
-					/* Rename the folder with the new name */
-					[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
-					folderExists = YES;
-					break;
+	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+		if (!error) {
+			NSFileManager * manager = [[NSFileManager alloc] init];
+			if (![manager fileExistsAtPath:path]) {
+				NSDirectoryEnumerator * enumerator = [manager enumeratorAtURL:[NSURL fileURLWithPath:parentFolderPath]
+												   includingPropertiesForKeys:nil
+																	  options:(NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsSubdirectoryDescendants)
+																 errorHandler:NULL];
+				BOOL folderExists = NO;
+				int length = (int)ceil(log10(step.identifier));
+				for (NSURL * fileURL in enumerator) {
+					NSString * filename = fileURL.path.lastPathComponent;
+					if (filename.length > (length + 1)) {
+						int folderID = 0;
+						if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == step.identifier) {
+							/* Rename the folder with the new name */
+							[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
+							folderExists = YES;
+							break;
+						}
+					}
+				}
+				
+				if (!folderExists) {
+					[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
 				}
 			}
 		}
-		
-		if (!folderExists) {
-			[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
-		}
-	}
-	
+	}];
 	return path;
 }
 

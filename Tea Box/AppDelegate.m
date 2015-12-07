@@ -44,27 +44,28 @@
 			// On tutorial on choose: Load the choosen library or create a new one
 			
 			_tutorialWindow.completionHandler = ^(NSURL * choosenURL, BOOL skipped) {
+				NSString * path = nil;
 				if (choosenURL) {
-					NSString * path = [choosenURL.path stringByAppendingString:@"/Library.teaboxdb"];
-					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
-					
-					NSURLBookmarkCreationOptions bookmarkOptions = 0;
-#if _SANDBOX_SUPPORTED_
-					bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
-#endif
-					NSData * bookmarkData = [choosenURL bookmarkDataWithOptions:bookmarkOptions
-												 includingResourceValuesForKeys:nil relativeToURL:nil error:NULL];
-					if (bookmarkData) {
-						NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-						[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
-					} else {
-						// @TODO: present the error on fail
-					}
+					path = [choosenURL.path stringByAppendingString:@"/Library.teaboxdb"];
 				} else {
 					NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
 					NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
-					NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
-					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
+					path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
+				}
+				NSAssert1(path != nil, @"No path can be get from %@", choosenURL);
+				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
+				NSURLBookmarkCreationOptions bookmarkOptions = 0;
+#if _SANDBOX_SUPPORTED_
+				bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
+#endif
+				NSError * error = nil;
+				NSData * bookmarkData = [[NSURL fileURLWithPath:path] bookmarkDataWithOptions:bookmarkOptions
+															   includingResourceValuesForKeys:nil relativeToURL:nil error:&error];
+				if (bookmarkData) {
+					NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+					[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
+				} else {
+					// @TODO: present the error on fail
 				}
 				
 				NSString * version = [NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"];

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="14F1012" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9059"/>
         <capability name="box content view" minToolsVersion="7.0"/>
     </dependencies>
     <objects>
@@ -389,6 +389,7 @@
             <view key="contentView" id="372" customClass="MainContentView">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                 <autoresizingMask key="autoresizingMask"/>
+                <animations/>
             </view>
             <point key="canvasLocation" x="455" y="-126"/>
         </window>
@@ -424,10 +425,12 @@
                             <constraint firstAttribute="width" constant="128" id="8Dz-Xm-lJf"/>
                             <constraint firstAttribute="height" constant="128" id="q7J-Kb-Bea"/>
                         </constraints>
+                        <animations/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" id="613"/>
                     </imageView>
                     <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="614">
-                        <rect key="frame" x="166" y="104" width="62" height="18"/>
+                        <rect key="frame" x="166" y="104" width="61" height="18"/>
+                        <animations/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Tea Box" id="615">
                             <font key="font" metaFont="systemBold" size="15"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -435,7 +438,8 @@
                         </textFieldCell>
                     </textField>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="616">
-                        <rect key="frame" x="166" y="62" width="116" height="34"/>
+                        <rect key="frame" x="166" y="62" width="115" height="34"/>
+                        <animations/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="617">
                             <font key="font" metaFont="system"/>
                             <string key="title">Version 1.1
@@ -455,6 +459,7 @@ Lis@cintosh, 2015</string>
                     <constraint firstItem="612" firstAttribute="leading" secondItem="611" secondAttribute="leading" constant="20" id="qie-3O-DKN"/>
                     <constraint firstItem="616" firstAttribute="top" secondItem="614" secondAttribute="bottom" constant="8" id="yIB-kt-5v4"/>
                 </constraints>
+                <animations/>
             </view>
             <connections>
                 <outlet property="aboutLabel" destination="616" id="dRE-LA-yYb"/>
@@ -477,6 +482,7 @@ Lis@cintosh, 2015</string>
                             <subviews>
                                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="632">
                                     <rect key="frame" x="14" y="14" width="254" height="18"/>
+                                    <animations/>
                                     <buttonCell key="cell" type="check" title="Show complete path for linked items" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="633">
                                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -487,6 +493,7 @@ Lis@cintosh, 2015</string>
                                 </button>
                                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="634">
                                     <rect key="frame" x="236" y="39" width="152" height="26"/>
+                                    <animations/>
                                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="635">
                                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="menu"/>
@@ -508,6 +515,7 @@ Lis@cintosh, 2015</string>
                                 </popUpButton>
                                 <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="651">
                                     <rect key="frame" x="13" y="46" width="221" height="17"/>
+                                    <animations/>
                                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Default action when adding items:" id="652">
                                         <font key="font" metaFont="system"/>
                                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -515,7 +523,9 @@ Lis@cintosh, 2015</string>
                                     </textFieldCell>
                                 </textField>
                             </subviews>
+                            <animations/>
                         </view>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </box>
@@ -527,6 +537,7 @@ Lis@cintosh, 2015</string>
                             <subviews>
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="642">
                                     <rect key="frame" x="250" y="12" width="75" height="32"/>
+                                    <animations/>
                                     <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="643">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -537,6 +548,7 @@ Lis@cintosh, 2015</string>
                                 </button>
                                 <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="660">
                                     <rect key="frame" x="441" y="16" width="25" height="25"/>
+                                    <animations/>
                                     <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="661">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -546,12 +558,15 @@ Lis@cintosh, 2015</string>
                                     </connections>
                                 </button>
                             </subviews>
+                            <animations/>
                         </view>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </box>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="644">
                         <rect key="frame" x="17" y="23" width="234" height="17"/>
+                        <animations/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Reset &quot;Do not show again&quot; on alerts:" id="645">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -563,7 +578,9 @@ Lis@cintosh, 2015</string>
                         <view key="contentView" id="Z3L-aF-TP1">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="1"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <animations/>
                         </view>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="0.6605839416" alpha="1" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
@@ -573,7 +590,9 @@ Lis@cintosh, 2015</string>
                         <view key="contentView" id="Jsz-ft-g9n">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="1"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <animations/>
                         </view>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="0.6605839416" alpha="1" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
@@ -583,7 +602,9 @@ Lis@cintosh, 2015</string>
                         <view key="contentView" id="ada-vt-ufj">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="1"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <animations/>
                         </view>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="0.6605839416" alpha="1" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
@@ -593,13 +614,16 @@ Lis@cintosh, 2015</string>
                         <view key="contentView" id="esZ-dU-C0g">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="1"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <animations/>
                         </view>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
                     </box>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="649">
                         <rect key="frame" x="17" y="80" width="148" height="17"/>
+                        <animations/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Location of the library:" id="650">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -608,12 +632,14 @@ Lis@cintosh, 2015</string>
                     </textField>
                     <pathControl verticalHuggingPriority="750" fixedFrame="YES" allowsExpansionToolTips="YES" translatesAutoresizingMaskIntoConstraints="NO" id="630">
                         <rect key="frame" x="165" y="76" width="150" height="26"/>
+                        <animations/>
                         <pathCell key="cell" selectable="YES" editable="YES" alignment="left" pathStyle="popUp" id="631">
                             <font key="font" metaFont="system"/>
                             <url key="url" string="file://localhost/Applications/"/>
                         </pathCell>
                     </pathControl>
                 </subviews>
+                <animations/>
             </view>
             <connections>
                 <outlet property="defaultActionPopUpButton" destination="634" id="665"/>
@@ -636,6 +662,7 @@ Lis@cintosh, 2015</string>
                         <constraints>
                             <constraint firstAttribute="width" constant="70" id="HkA-yO-W00"/>
                         </constraints>
+                        <animations/>
                         <buttonCell key="cell" type="push" title="Skip" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="PAI-BN-2R9">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -649,6 +676,7 @@ DQ
                     </button>
                     <button horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SZ0-JN-VvY">
                         <rect key="frame" x="437" y="17" width="25" height="25"/>
+                        <animations/>
                         <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QT7-Eh-mPz">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -669,10 +697,12 @@ DQ
                                         <constraint firstAttribute="width" constant="96" id="bxG-7c-x16"/>
                                         <constraint firstAttribute="height" constant="96" id="pZ4-e8-Rnn"/>
                                     </constraints>
+                                    <animations/>
                                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="document-icon" id="Wdc-Q2-TUq"/>
                                 </imageView>
                                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="751" verticalCompressionResistancePriority="751" translatesAutoresizingMaskIntoConstraints="NO" id="6Hu-CW-Isr">
                                     <rect key="frame" x="122" y="142" width="71" height="17"/>
+                                    <animations/>
                                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="The library" id="mPM-XH-ADQ">
                                         <font key="font" size="13" name=".HelveticaNeueDeskInterface-Bold"/>
                                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -680,7 +710,8 @@ DQ
                                     </textFieldCell>
                                 </textField>
                                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xqk-KR-86t">
-                                    <rect key="frame" x="122" y="49" width="334" height="85"/>
+                                    <rect key="frame" x="122" y="49" width="340" height="85"/>
+                                    <animations/>
                                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="ajC-2l-JWc">
                                         <font key="font" metaFont="system"/>
                                         <string key="title">The library will contain all copied files and folders, texts, images, and all projects and steps data.
@@ -695,6 +726,7 @@ You can choose the folder to put the library now, and from the application prefe
                                     <constraints>
                                         <constraint firstAttribute="width" constant="88" id="Ak2-hR-yoz"/>
                                     </constraints>
+                                    <animations/>
                                     <buttonCell key="cell" type="push" title="Choose..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="sh2-GI-tHO">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -705,6 +737,7 @@ You can choose the folder to put the library now, and from the application prefe
                                 </button>
                                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Da2-Ju-Hr5">
                                     <rect key="frame" x="218" y="23" width="256" height="17"/>
+                                    <animations/>
                                     <textFieldCell key="cell" lineBreakMode="truncatingHead" sendsActionOnEndEditing="YES" placeholderString="" id="WVM-Ij-NDy">
                                         <font key="font" metaFont="system"/>
                                         <color key="textColor" white="0.49552837171052633" alpha="0.84999999999999998" colorSpace="calibratedWhite"/>
@@ -713,6 +746,7 @@ You can choose the folder to put the library now, and from the application prefe
                                 </textField>
                             </subviews>
                             <constraints>
+                                <constraint firstAttribute="trailing" secondItem="Xqk-KR-86t" secondAttribute="trailing" constant="20" id="0ef-ix-3zS"/>
                                 <constraint firstItem="6Hu-CW-Isr" firstAttribute="top" secondItem="7ZV-Kh-TRL" secondAttribute="top" constant="20" symbolic="YES" id="30E-Ad-nwc"/>
                                 <constraint firstItem="XdD-ir-H6Y" firstAttribute="baseline" secondItem="Da2-Ju-Hr5" secondAttribute="baseline" id="DdC-z5-d1C"/>
                                 <constraint firstItem="Da2-Ju-Hr5" firstAttribute="top" secondItem="Xqk-KR-86t" secondAttribute="bottom" constant="9" id="FHI-40-gc9"/>
@@ -727,10 +761,12 @@ You can choose the folder to put the library now, and from the application prefe
                                 <constraint firstItem="Da2-Ju-Hr5" firstAttribute="leading" secondItem="XdD-ir-H6Y" secondAttribute="trailing" constant="8" symbolic="YES" id="rjK-vS-oEY"/>
                                 <constraint firstAttribute="trailing" secondItem="Da2-Ju-Hr5" secondAttribute="trailing" constant="8" id="tMw-YF-cMO"/>
                             </constraints>
+                            <animations/>
                         </view>
                         <constraints>
                             <constraint firstAttribute="height" constant="179" id="9mK-bp-JDb"/>
                         </constraints>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </box>
@@ -739,10 +775,12 @@ You can choose the folder to put the library now, and from the application prefe
                         <view key="contentView" id="4Fk-AJ-tOr">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="1"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <animations/>
                         </view>
                         <constraints>
                             <constraint firstAttribute="height" constant="1" id="pMU-Ry-AkD"/>
                         </constraints>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="0.6605839416" alpha="1" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
@@ -752,10 +790,12 @@ You can choose the folder to put the library now, and from the application prefe
                         <view key="contentView" id="uuw-25-Qgr">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="1"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <animations/>
                         </view>
                         <constraints>
                             <constraint firstAttribute="height" constant="1" id="lAs-Ml-VWb"/>
                         </constraints>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
@@ -765,10 +805,12 @@ You can choose the folder to put the library now, and from the application prefe
                         <view key="contentView" id="SEi-e1-ddD">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="1"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <animations/>
                         </view>
                         <constraints>
                             <constraint firstAttribute="height" constant="1" id="wpI-ud-qrn"/>
                         </constraints>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="0.6605839416" alpha="1" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
@@ -792,6 +834,7 @@ You can choose the folder to put the library now, and from the application prefe
                     <constraint firstAttribute="trailing" secondItem="cAL-oc-gVw" secondAttribute="trailing" id="jLj-mf-Zxq"/>
                     <constraint firstItem="vmo-jr-AlK" firstAttribute="top" secondItem="NBv-t8-Aw2" secondAttribute="bottom" id="ldq-cL-Dpg"/>
                 </constraints>
+                <animations/>
             </view>
             <connections>
                 <outlet property="pathDescriptionLabel" destination="Da2-Ju-Hr5" id="S8x-9V-HNk"/>

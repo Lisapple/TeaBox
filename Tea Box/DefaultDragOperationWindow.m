@@ -19,18 +19,16 @@
 	NSString * dragOperation = nil;
 	switch (_choiceMatrix.selectedRow) {
 		case 1:
-			dragOperation = @"Copy";
-			break;
+			dragOperation = @"Copy"; break;
 		case 2:
-			dragOperation = @"Link";
-			break;
+			dragOperation = @"Link"; break;
 		case 0:
 		default:
-			dragOperation = @"Move";
-			break;
+			dragOperation = @"Move"; break;
 	}
 	
 	[userDefaults setObject:dragOperation forKey:@"Default-Drag-Operation"];
+	[userDefaults synchronize];
 	
 	[NSApp endSheet:self returnCode:NSOKButton];
 	[self orderOut:nil];
