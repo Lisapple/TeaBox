@@ -53,7 +53,15 @@
 					path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 				}
 				NSAssert1(path != nil, @"No path can be get from %@", choosenURL);
-				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
+				
+				// Copy the default library
+				NSURL * const defaultLibraryURL = [[NSBundle mainBundle] URLForResource:@"Default Library/Library" withExtension:@"teaboxdb"];
+				BOOL success = [[NSFileManager defaultManager] copyItemAtPath:defaultLibraryURL.path toPath:path error:nil];
+				
+				if (success) { // If copy fails, create an empty one
+					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
+				}
+				
 				NSURLBookmarkCreationOptions bookmarkOptions = 0;
 #if _SANDBOX_SUPPORTED_
 				bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
@@ -71,6 +79,7 @@
 				NSString * version = [NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"];
 				[[NSUserDefaults standardUserDefaults] setObject:version forKey:@"last-launch-app-version"];
 				
+				[_mainViewController reloadData];
 				self.window.delegate = self;
 				[self.window makeKeyAndOrderFront:nil]; // Order front the window only after loading the navigationController and the main viewController
 			};
