@@ -2,17 +2,7 @@
   "images" : [
     {
       "idiom" : "universal",
-      "filename" : "folder-type.png",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "filename" : "folder-type@2x.png",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "folder-type.pdf"
     }
   ],
   "info" : {
