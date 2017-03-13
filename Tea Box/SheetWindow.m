@@ -12,13 +12,13 @@
 
 - (IBAction)cancelAction:(id)sender
 {
-	[NSApp endSheet:self returnCode:NSCancelButton];
+	[self.parentWindow endSheet:self returnCode:NSModalResponseCancel];
 	[self orderOut:nil];
 }
 
 - (IBAction)okAction:(id)sender
 {
-	[NSApp endSheet:self returnCode:NSOKButton];
+	[self.parentWindow endSheet:self returnCode:NSModalResponseOK];
 	[self orderOut:nil];
 }
 

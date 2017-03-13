@@ -41,22 +41,26 @@
 		50679F36163190FE000C4396 /* MainWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 50679F35163190FE000C4396 /* MainWindow.m */; };
 		508191B4166F764900B9217E /* NSFileManager+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 508191B3166F764900B9217E /* NSFileManager+additions.m */; };
 		509E4A8B1657FC19000D901A /* ImportFormWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 509E4A8A1657FC19000D901A /* ImportFormWindow.m */; };
+		50A28F801E6DF54F00EB2AD8 /* TBCoder.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A28F7F1E6DF54F00EB2AD8 /* TBCoder.m */; };
+		50A28F831E6DFC5400EB2AD8 /* Project+Coding.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A28F821E6DFC5400EB2AD8 /* Project+Coding.m */; };
+		50A28F861E6DFC6B00EB2AD8 /* Step+Coding.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A28F851E6DFC6B00EB2AD8 /* Step+Coding.m */; };
+		50A28F891E6DFC8000EB2AD8 /* Item+Coding.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A28F881E6DFC8000EB2AD8 /* Item+Coding.m */; };
+		50A28F8C1E6E07E500EB2AD8 /* TBLibrary+Coding.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A28F8B1E6E07E500EB2AD8 /* TBLibrary+Coding.m */; };
 		50A5928916398B34005570E7 /* NSMenu+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A5928816398B32005570E7 /* NSMenu+additions.m */; };
 		50A84FB616387E260092D85F /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 50A84FB516387E260092D85F /* WebKit.framework */; };
 		50AD992F18FDB567006FACA1 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 50AD992E18FDB567006FACA1 /* index.html */; };
+		50C7FA391E6D981600D54241 /* NSAlert+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50C7FA381E6D981600D54241 /* NSAlert+additions.m */; };
 		50D87E041673A52100CB4F65 /* NSURL+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50D87E031673A52100CB4F65 /* NSURL+additions.m */; };
 		50DEE67216A99A9900FCE61C /* Tea Box Help in Resources */ = {isa = PBXBuildFile; fileRef = 50DEE67116A99A9900FCE61C /* Tea Box Help */; };
 		50E5E2C61642E810005CEF0D /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 50E5E2C51642E80F005CEF0D /* Quartz.framework */; };
 		50E5E2C91642F9DE005CEF0D /* NSDate+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 50E5E2C81642F9DE005CEF0D /* NSDate+additions.m */; };
-		D41B5640F57844A98977115C /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B1D4352B020488DA8897899 /* libPods.a */; };
+		E23848157F0EA075B3E92546 /* libPods-Tea Box.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D00B0D96A22520BDBDCF98D /* libPods-Tea Box.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		11A1AC28169C71B600AA499D /* ApplicationPreferencesWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ApplicationPreferencesWindow.h; sourceTree = "<group>"; };
 		11A1AC29169C71B700AA499D /* ApplicationPreferencesWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ApplicationPreferencesWindow.m; sourceTree = "<group>"; };
-		1B1D4352B020488DA8897899 /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		2642C69D403141C57B304436 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
-		37BEA9D204892C61B7A77ED8 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
+		24F2B0F4ABC4F0634E8086C9 /* Pods-Tea Box.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tea Box.release.xcconfig"; path = "Pods/Target Support Files/Pods-Tea Box/Pods-Tea Box.release.xcconfig"; sourceTree = "<group>"; };
 		5007A4F21BBD454000BA4ED7 /* TutorialWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TutorialWindow.h; sourceTree = "<group>"; };
 		5007A4F31BBD454000BA4ED7 /* TutorialWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TutorialWindow.m; sourceTree = "<group>"; };
 		50082C8118A2EF6200021E1C /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
@@ -118,10 +122,22 @@
 		508191B3166F764900B9217E /* NSFileManager+additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+additions.m"; sourceTree = "<group>"; };
 		509E4A891657FC19000D901A /* ImportFormWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImportFormWindow.h; sourceTree = "<group>"; };
 		509E4A8A1657FC19000D901A /* ImportFormWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ImportFormWindow.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		50A28F7E1E6DF54F00EB2AD8 /* TBCoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TBCoder.h; sourceTree = "<group>"; };
+		50A28F7F1E6DF54F00EB2AD8 /* TBCoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TBCoder.m; sourceTree = "<group>"; };
+		50A28F811E6DFC5400EB2AD8 /* Project+Coding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Project+Coding.h"; sourceTree = "<group>"; };
+		50A28F821E6DFC5400EB2AD8 /* Project+Coding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Project+Coding.m"; sourceTree = "<group>"; };
+		50A28F841E6DFC6B00EB2AD8 /* Step+Coding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Step+Coding.h"; sourceTree = "<group>"; };
+		50A28F851E6DFC6B00EB2AD8 /* Step+Coding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Step+Coding.m"; sourceTree = "<group>"; };
+		50A28F871E6DFC8000EB2AD8 /* Item+Coding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Item+Coding.h"; sourceTree = "<group>"; };
+		50A28F881E6DFC8000EB2AD8 /* Item+Coding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Item+Coding.m"; sourceTree = "<group>"; };
+		50A28F8A1E6E07E500EB2AD8 /* TBLibrary+Coding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "TBLibrary+Coding.h"; sourceTree = "<group>"; };
+		50A28F8B1E6E07E500EB2AD8 /* TBLibrary+Coding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "TBLibrary+Coding.m"; sourceTree = "<group>"; };
 		50A5928716398B32005570E7 /* NSMenu+additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMenu+additions.h"; sourceTree = "<group>"; };
 		50A5928816398B32005570E7 /* NSMenu+additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMenu+additions.m"; sourceTree = "<group>"; };
 		50A84FB516387E260092D85F /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		50AD992E18FDB567006FACA1 /* index.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = index.html; path = Pods/TBIndexParser/index.html; sourceTree = SOURCE_ROOT; };
+		50C7FA371E6D981600D54241 /* NSAlert+additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSAlert+additions.h"; sourceTree = "<group>"; };
+		50C7FA381E6D981600D54241 /* NSAlert+additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSAlert+additions.m"; sourceTree = "<group>"; };
 		50D87E011673980A00CB4F65 /* Tea-Box.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "Tea-Box.entitlements"; path = "Tea Box/Tea-Box.entitlements"; sourceTree = "<group>"; };
 		50D87E021673A52100CB4F65 /* NSURL+additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+additions.h"; sourceTree = "<group>"; };
 		50D87E031673A52100CB4F65 /* NSURL+additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+additions.m"; sourceTree = "<group>"; };
@@ -129,6 +145,8 @@
 		50E5E2C51642E80F005CEF0D /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
 		50E5E2C71642F9DE005CEF0D /* NSDate+additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+additions.h"; sourceTree = "<group>"; };
 		50E5E2C81642F9DE005CEF0D /* NSDate+additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+additions.m"; sourceTree = "<group>"; };
+		64C6741DF2B13C255585D319 /* Pods-Tea Box.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tea Box.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Tea Box/Pods-Tea Box.debug.xcconfig"; sourceTree = "<group>"; };
+		6D00B0D96A22520BDBDCF98D /* libPods-Tea Box.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Tea Box.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,7 +158,7 @@
 				50E5E2C61642E810005CEF0D /* Quartz.framework in Frameworks */,
 				50A84FB616387E260092D85F /* WebKit.framework in Frameworks */,
 				5058874E161CB2C100B44D06 /* Cocoa.framework in Frameworks */,
-				D41B5640F57844A98977115C /* libPods.a in Frameworks */,
+				E23848157F0EA075B3E92546 /* libPods-Tea Box.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -154,7 +172,7 @@
 				50588753161CB2C100B44D06 /* Tea Box */,
 				5058874C161CB2C100B44D06 /* Frameworks */,
 				5058874A161CB2C100B44D06 /* Products */,
-				ECD21ECC98117097BC632109 /* Pods */,
+				5591D6BED6A3A5CFF7581A24 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -174,7 +192,7 @@
 				50A84FB516387E260092D85F /* WebKit.framework */,
 				5058874D161CB2C100B44D06 /* Cocoa.framework */,
 				5058874F161CB2C100B44D06 /* Other Frameworks */,
-				1B1D4352B020488DA8897899 /* libPods.a */,
+				6D00B0D96A22520BDBDCF98D /* libPods-Tea Box.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -211,6 +229,8 @@
 				50271C4E1653F841009687E6 /* DefaultDragOperationWindow.m */,
 				503050841621EF08002FBB2B /* TBLibrary.h */,
 				503050851621EF08002FBB2B /* TBLibrary.m */,
+				50A28F8A1E6E07E500EB2AD8 /* TBLibrary+Coding.h */,
+				50A28F8B1E6E07E500EB2AD8 /* TBLibrary+Coding.m */,
 				50679F34163190FE000C4396 /* MainWindow.h */,
 				50679F35163190FE000C4396 /* MainWindow.m */,
 				50143FDF1636DD950086B8C4 /* SandboxHelper.h */,
@@ -219,6 +239,8 @@
 				50409E431B8E6BB9008AB3D0 /* SheetWindow.m */,
 				509E4A891657FC19000D901A /* ImportFormWindow.h */,
 				509E4A8A1657FC19000D901A /* ImportFormWindow.m */,
+				50A28F7E1E6DF54F00EB2AD8 /* TBCoder.h */,
+				50A28F7F1E6DF54F00EB2AD8 /* TBCoder.m */,
 				50EABFF2163AE0640091A4C7 /* Model Classes */,
 				50EABFF1163AE04A0091A4C7 /* NavigationBar */,
 				50EABFF3163AE0AF0091A4C7 /* Additions */,
@@ -260,10 +282,16 @@
 			children = (
 				5058876A161CB72900B44D06 /* Project.h */,
 				5058876B161CB72900B44D06 /* Project.m */,
+				50A28F811E6DFC5400EB2AD8 /* Project+Coding.h */,
+				50A28F821E6DFC5400EB2AD8 /* Project+Coding.m */,
 				5058876F161CC1E200B44D06 /* Step.h */,
 				50588770161CC1E200B44D06 /* Step.m */,
+				50A28F841E6DFC6B00EB2AD8 /* Step+Coding.h */,
+				50A28F851E6DFC6B00EB2AD8 /* Step+Coding.m */,
 				500C284B161DF1C900652839 /* Item.h */,
 				500C284C161DF1C900652839 /* Item.m */,
+				50A28F871E6DFC8000EB2AD8 /* Item+Coding.h */,
+				50A28F881E6DFC8000EB2AD8 /* Item+Coding.m */,
 			);
 			name = "Model Classes";
 			sourceTree = "<group>";
@@ -289,15 +317,17 @@
 				502A03CD165564D0004CDF08 /* Step+additions.m */,
 				502A03CF165564E9004CDF08 /* Item+additions.h */,
 				502A03D0165564E9004CDF08 /* Item+additions.m */,
+				50C7FA371E6D981600D54241 /* NSAlert+additions.h */,
+				50C7FA381E6D981600D54241 /* NSAlert+additions.m */,
 			);
 			name = Additions;
 			sourceTree = "<group>";
 		};
-		ECD21ECC98117097BC632109 /* Pods */ = {
+		5591D6BED6A3A5CFF7581A24 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				2642C69D403141C57B304436 /* Pods.debug.xcconfig */,
-				37BEA9D204892C61B7A77ED8 /* Pods.release.xcconfig */,
+				64C6741DF2B13C255585D319 /* Pods-Tea Box.debug.xcconfig */,
+				24F2B0F4ABC4F0634E8086C9 /* Pods-Tea Box.release.xcconfig */,
 			);
 			name = Pods;
 			sourceTree = "<group>";
@@ -309,11 +339,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 50588767161CB2C100B44D06 /* Build configuration list for PBXNativeTarget "Tea Box" */;
 			buildPhases = (
-				640E00C99CE2426FBDAA8944 /* Check Pods Manifest.lock */,
+				14FB8E194D735E9D9A37B0FE /* [CP] Check Pods Manifest.lock */,
 				50588745161CB2C100B44D06 /* Sources */,
 				50588746161CB2C100B44D06 /* Frameworks */,
 				50588747161CB2C100B44D06 /* Resources */,
-				AB6282DB561C43AEA04A6F6F /* Copy Pods Resources */,
+				509CE96D1C47E4190076DD98 /* ShellScript */,
+				63520B12031B2E51AFD0089D /* [CP] Embed Pods Frameworks */,
+				269F30B582184BF34CCA8E45 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -330,7 +362,7 @@
 		50588740161CB2C000B44D06 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0700;
+				LastUpgradeCheck = 0820;
 				TargetAttributes = {
 					50588748161CB2C100B44D06 = {
 						DevelopmentTeam = 79MVQZ8SAR;
@@ -380,34 +412,62 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		640E00C99CE2426FBDAA8944 /* Check Pods Manifest.lock */ = {
+		14FB8E194D735E9D9A37B0FE /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
-		AB6282DB561C43AEA04A6F6F /* Copy Pods Resources */ = {
+		269F30B582184BF34CCA8E45 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Copy Pods Resources";
+			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Tea Box/Pods-Tea Box-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		509CE96D1C47E4190076DD98 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Fabric/run\" ff25ea654b1977a1b75790328380c0a34c60cbc8 fa8b9d8838ec0b5f094ae074298a32cf17e1258999ec60df6a22edb65b557ea8";
+		};
+		63520B12031B2E51AFD0089D /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Tea Box/Pods-Tea Box-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -424,8 +484,11 @@
 				500C2843161DED6000652839 /* MainViewController.m in Sources */,
 				500C2849161DED8000652839 /* ProjectViewController.m in Sources */,
 				500C284D161DF1CB00652839 /* Item.m in Sources */,
+				50A28F8C1E6E07E500EB2AD8 /* TBLibrary+Coding.m in Sources */,
+				50A28F831E6DFC5400EB2AD8 /* Project+Coding.m in Sources */,
 				500C2850161DF3C500652839 /* NavigationController.m in Sources */,
 				503050861621EF08002FBB2B /* TBLibrary.m in Sources */,
+				50C7FA391E6D981600D54241 /* NSAlert+additions.m in Sources */,
 				50370B9716314E1E00C826F4 /* NavigationBar.m in Sources */,
 				50679F36163190FE000C4396 /* MainWindow.m in Sources */,
 				50143FE01636DD950086B8C4 /* SandboxHelper.m in Sources */,
@@ -437,8 +500,11 @@
 				50271C4F1653F841009687E6 /* DefaultDragOperationWindow.m in Sources */,
 				502A03CA165564BC004CDF08 /* Project+additions.m in Sources */,
 				502A03CE165564D0004CDF08 /* Step+additions.m in Sources */,
+				50A28F891E6DFC8000EB2AD8 /* Item+Coding.m in Sources */,
+				50A28F801E6DF54F00EB2AD8 /* TBCoder.m in Sources */,
 				502A03D1165564E9004CDF08 /* Item+additions.m in Sources */,
 				509E4A8B1657FC19000D901A /* ImportFormWindow.m in Sources */,
+				50A28F861E6DFC6B00EB2AD8 /* Step+Coding.m in Sources */,
 				508191B4166F764900B9217E /* NSFileManager+additions.m in Sources */,
 				5015C5DB1BBCAD620044D059 /* AboutWindow.m in Sources */,
 				50D87E041673A52100CB4F65 /* NSURL+additions.m in Sources */,
@@ -473,11 +539,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
@@ -493,7 +562,6 @@
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -501,7 +569,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 			};
@@ -511,11 +579,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
@@ -524,7 +595,6 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -532,14 +602,14 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				SDKROOT = macosx;
 			};
 			name = Release;
 		};
 		50588768161CB2C100B44D06 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2642C69D403141C57B304436 /* Pods.debug.xcconfig */;
+			baseConfigurationReference = 64C6741DF2B13C255585D319 /* Pods-Tea Box.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -548,22 +618,23 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Tea Box/Tea Box-Prefix.pch";
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				INFOPLIST_FILE = "Tea Box/Tea Box-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.lisacintosh.tea-box";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
 		};
 		50588769161CB2C100B44D06 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 37BEA9D204892C61B7A77ED8 /* Pods.release.xcconfig */;
+			baseConfigurationReference = 24F2B0F4ABC4F0634E8086C9 /* Pods-Tea Box.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -572,15 +643,16 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Tea Box/Tea Box-Prefix.pch";
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
 				INFOPLIST_FILE = "Tea Box/Tea Box-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.lisacintosh.tea-box";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

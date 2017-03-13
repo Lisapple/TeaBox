@@ -34,4 +34,20 @@ static NSDateFormatter * _formatter = nil;
 	return [_formatter stringFromDate:self];
 }
 
++ (NSDate *)dateWithISO8601Format:(NSString *)dateString
+{
+	NSDateFormatter * formatter = [[NSDateFormatter alloc] init];
+	formatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ssZZZZZ";
+	formatter.timeZone = [NSTimeZone defaultTimeZone];
+	return [formatter dateFromString:dateString];
+}
+
+- (NSString *)iso8601DateString
+{
+	NSDateFormatter * formatter = [[NSDateFormatter alloc] init];
+	formatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ssZZZZZ";
+	formatter.timeZone = [NSTimeZone defaultTimeZone];
+	return [formatter stringFromDate:self];
+}
+
 @end

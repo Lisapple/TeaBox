@@ -10,9 +10,12 @@
 
 #import "Item.h"
 
-@interface Item (additions)
+@interface FileItem (additions)
 
-//- (BOOL)moveToPath:(NSString *)path;
 - (BOOL)moveToTrash;
 
+@end
+
+
+@interface Item (QLPreviewItem) <QLPreviewItem>
 @end

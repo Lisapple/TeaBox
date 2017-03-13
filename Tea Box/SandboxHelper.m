@@ -29,35 +29,16 @@ static NSMutableArray <NSURL *> * _startedScopedResources = nil;
 
 + (void)executeBlockWithSecurityScopedLibraryAccessing:(void (^)(NSError *))block
 {
-	if ([self.class sandboxSupported]) {
-		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-		NSData * bookmarkData = [userDefaults objectForKey:kLibraryBookmarkDataKey];
-		if (bookmarkData) {
-			
-			NSURLBookmarkResolutionOptions bookmarkOptions = 0;
-#if _SANDBOX_SUPPORTED_
-			bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
-#endif
-			NSError * error = nil;
-			NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
-														options:bookmarkOptions
-												  relativeToURL:nil
-											bookmarkDataIsStale:NULL
-														  error:&error];
-			BOOL success = [fileURL startAccessingSecurityScopedResource];
-			if (!success && !error) {
-				error = [NSError errorWithDomain:@"" code:-1 userInfo:@{}];
-			}
-			if (block) {
-				block(error);
-			}
-			[fileURL stopAccessingSecurityScopedResource];
-		} else if (block) {
-			NSError * error = [NSError errorWithDomain:@"" code:-1 userInfo:@{}];
-			block(error);
-		}
+	if (![self.class sandboxSupported]) { if (block) block(nil); return ; } // No error returned, Sandbox not activated
+	
+	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+	NSData * bookmarkData = [userDefaults objectForKey:kLibraryBookmarkDataKey];
+	if (bookmarkData) {
+		[self.class executeWithSecurityScopedAccessFromBookmarkData:bookmarkData block:^(NSURL * fileURL, NSError * error) { block(error); }];
+		
 	} else if (block) {
-		block(nil);
+		NSError * error = [NSError errorWithDomain:@"" code:-1 userInfo:@{}];
+		block(error);
 	}
 }
 
@@ -68,94 +49,88 @@ static NSMutableArray <NSURL *> * _startedScopedResources = nil;
 
 + (void)executeWithSecurityScopedAccessToPath:(NSString *)path block:(void (^)(NSError * _Nullable))block
 {
-	if ([self.class sandboxSupported]) {
-		if (path) {
-			NSData * bookmarkData = nil;
-			
-			NSString * libraryPath = [TBLibrary defaultLibrary].path;
-			if (path.length >= libraryPath.length &&
-				[[path substringToIndex:libraryPath.length] isEqualToString:libraryPath]) { // The file is into the library, use library bookmark data
-				NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-				bookmarkData = [userDefaults dataForKey:kLibraryBookmarkDataKey];
-			} else { // The file is not into the library, look for saved bookmark data
-				NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-				bookmarkData = [userDefaults objectForKey:path];
-			}
-			
-			if (bookmarkData) {
-				NSError * error = nil;
-				NSURLBookmarkResolutionOptions bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
-				NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
-															options:bookmarkOptions
-													  relativeToURL:nil
-												bookmarkDataIsStale:NULL
-															  error:&error];
-				BOOL success = [fileURL startAccessingSecurityScopedResource];
-				if (!success && !error) {
-					error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
-											userInfo:@{ NSLocalizedDescriptionKey : @"Unable to create a secure access to file" }];
-				}
-				if (block) {
-					block(error);
-				}
-				[fileURL stopAccessingSecurityScopedResource];
-			} else if (block) {
-				NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
-												  userInfo:@{ NSLocalizedDescriptionKey : @"No bookmark data found" }];
-				block(error);
-			}
-		} else if (block) {
-			NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
-											  userInfo:@{ NSLocalizedDescriptionKey : @"Given path is null" }];
-			block(error);
-		}
+	if (![self.class sandboxSupported]) { if (block) block(nil); return ; } // No error returned, Sandbox not activated
+	
+	NSData * bookmarkData = nil;
+	NSString * libraryPath = [TBLibrary defaultLibrary].path;
+	if (path.length >= libraryPath.length &&
+		[[path substringToIndex:libraryPath.length] isEqualToString:libraryPath]) { // The file is into the library, use library bookmark data
+		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+		bookmarkData = [userDefaults dataForKey:kLibraryBookmarkDataKey];
+		
+	} else { // The file is not into the library, look for saved bookmark data
+		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+		bookmarkData = [userDefaults objectForKey:path];
+	}
+	
+	if (bookmarkData) {
+		[self.class executeWithSecurityScopedAccessFromBookmarkData:bookmarkData block:^(NSURL * fileURL, NSError * error) { block(error); }];
+		
 	} else if (block) {
-		block(nil); // No error returned, Sandbox not activated
+		NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
+										  userInfo:@{ NSLocalizedDescriptionKey : @"No bookmark data found" }];
+		block(error);
 	}
 }
 
 + (void)executeWithSecurityScopedAccessToProject:(nonnull Project *)project block:(void (^)(NSError * _Nullable))block
 {
-	if ([self.class sandboxSupported]) {
-		if (item) {
-			NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-			NSString * key = [NSString stringWithFormat:@"%i/%i/%i", item.step.project.identifier, item.step.identifier, item.identifier];
-			NSData * bookmarkData = [userDefaults objectForKey:key];
-			if (!bookmarkData) {
-				// The file is into the library, use library bookmark data
-				bookmarkData = [userDefaults dataForKey:kLibraryBookmarkDataKey];
-			}
-			
-			if (bookmarkData) {
-				NSError * error = nil;
-				NSURLBookmarkResolutionOptions bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
-				NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
-															options:bookmarkOptions
-													  relativeToURL:nil
-												bookmarkDataIsStale:NULL
-															  error:&error];
-				BOOL success = [fileURL startAccessingSecurityScopedResource];
-				if (!success && !error) {
-					error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
-											userInfo:@{ NSLocalizedDescriptionKey : @"Unable to create a secure access to file" }];
-				}
-				if (block) {
-					block(error);
-				}
-				[fileURL stopAccessingSecurityScopedResource];
-			} else if (block) {
-				NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
-												  userInfo:@{ NSLocalizedDescriptionKey : @"No bookmark data found" }];
-				block(error);
-			}
-		} else if (block) {
-			NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
-											  userInfo:@{ NSLocalizedDescriptionKey : @"Given path is null" }];
-			block(error);
-		}
-	} else if (block) {
-		block(nil); // No error returned, Sandbox not activated
+	if (![self.class sandboxSupported]) { if (block) block(nil); return ; } // No error returned, Sandbox not activated
+	
+	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+	NSString * key = [NSString stringWithFormat:@"%li", (long)project.identifier];
+	NSData * bookmarkData = [userDefaults objectForKey:key];
+	if (!bookmarkData) {
+		// The file is into the library, use library bookmark data
+		bookmarkData = [userDefaults dataForKey:kLibraryBookmarkDataKey];
 	}
+	if (bookmarkData) {
+		[self.class executeWithSecurityScopedAccessFromBookmarkData:bookmarkData block:^(NSURL * fileURL, NSError * error) { block(error); }];
+		
+	} else if (block) {
+		NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
+										  userInfo:@{ NSLocalizedDescriptionKey : @"No bookmark data found" }];
+		block(error);
+	}
+}
+
++ (void)executeWithSecurityScopedAccessToItem:(nonnull FileItem *)item block:(void (^)(NSError * _Nullable))block
+{
+	if (![self.class sandboxSupported]) { if (block) block(nil); return ; } // No error returned, Sandbox not activated
+	
+	NSString * const key = item.URL.absoluteString;
+	NSUserDefaults * const userDefaults = [NSUserDefaults standardUserDefaults];
+	NSData * bookmarkData = [userDefaults objectForKey:key];
+	if (!bookmarkData) // The file is into the library, use library bookmark data
+		bookmarkData = [userDefaults dataForKey:kLibraryBookmarkDataKey];
+	
+	if (bookmarkData)
+		[self.class executeWithSecurityScopedAccessFromBookmarkData:bookmarkData block:^(NSURL * fileURL, NSError * error) { block(error); }];
+	else if (block) {
+		NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
+										  userInfo:@{ NSLocalizedDescriptionKey : @"No bookmark data found" }];
+		block(error);
+	}
+}
+
++ (void)executeWithSecurityScopedAccessFromBookmarkData:(nonnull NSData *)bookmarkData block:(void (^)(NSURL * _Nullable, NSError * _Nullable))block
+{
+	NSError * error = nil;
+	NSURLBookmarkResolutionOptions bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
+	NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
+												options:bookmarkOptions
+										  relativeToURL:nil
+									bookmarkDataIsStale:NULL
+												  error:&error];
+	BOOL success = [fileURL startAccessingSecurityScopedResource];
+	if (!success && !error) {
+		error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
+								userInfo:@{ NSLocalizedDescriptionKey : @"Unable to create a secure access to file" }];
+	}
+	if (block)
+		block(fileURL, error);
+	
+	[fileURL stopAccessingSecurityScopedResource];
 }
 
 + (NSString *)bookmarkPathWithPath:(nonnull NSString *)path

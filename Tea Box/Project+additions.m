@@ -24,16 +24,7 @@
 	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
 		if (!error) {
 			NSFileManager * fileManager = [NSFileManager defaultManager];
-			if ([fileManager respondsToSelector:@selector(trashItemAtURL:resultingItemURL:error:)]) { // OSX.8+
-				moved = (BOOL)[fileManager trashItemAtURL:[NSURL fileURLWithPath:path] resultingItemURL:nil error:nil];
-			} else {
-				const char * sourcePath = path.UTF8String;
-				char * targetPath = NULL;
-				OSStatus error = FSPathMoveObjectToTrashSync(sourcePath, &targetPath, kFSFileOperationDefaultOptions);
-				moved = (targetPath != NULL);
-				
-				if (!moved) NSLog(@"move to trash fails for %@ (%d)", path, error);
-			}
+			moved = (BOOL)[fileManager trashItemAtURL:[NSURL fileURLWithPath:path] resultingItemURL:nil error:nil];
 		}
 	}];
 	return moved;
@@ -65,12 +56,10 @@
 - (BOOL)moveAllStepsAndItemsToTrash
 {
 	BOOL success = YES;
-	NSArray * steps = self.steps;
-	for (Step * step in steps) {
+	for (Step * step in self.steps) {
 		success |= [step moveToTrash];
 		success |= [step delete];
 	}
-	
 	return success;
 }
 

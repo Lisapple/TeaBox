@@ -12,6 +12,7 @@
 #import "NSIndexPath+additions.h"
 #import "NSMenu+additions.h"
 #import "Project+additions.h"
+#import "NSAlert+additions.h"
 
 @interface MainViewController ()
 
@@ -21,6 +22,10 @@
 @property (unsafe_unretained) IBOutlet SheetWindow * createProjectWindow;
 @property (unsafe_unretained) IBOutlet NSTextField * createProjectLabel, * createProjectField;
 @property (unsafe_unretained) IBOutlet NSButton * createProjectOKButton;
+
+@property (strong, nonnull) TBLibrary * library;
+
+- (IBAction)newProjectAction:(id)sender;
 
 @end
 
@@ -42,11 +47,12 @@
 
 - (void)loadView
 {
+	self.library = [TBLibrary defaultLibrary];
+	NSAssert(self.library != nil, @"");
+	
 	[super loadView];
 	
-	priorityNames = @[ @"None", @"Low", @"Normal", @"High" ];
-	
-	_navigationBar.title = @"Tea Box";
+	_navigationBar.title = self.library.name ?: @"Tea Box";
 	
 	self.tableView.delegate = self;
 	self.tableView.dataSource = self;
@@ -58,22 +64,22 @@
 	[_navigationBar.rightBarButton registerForDraggedTypes:@[ NSFilenamesPboardType ]]; // Add others types of dragging item
 	
 	[[NSNotificationCenter defaultCenter] addObserverForName:NSControlTextDidChangeNotification
-												  usingBlock:^(NSNotification *notification) {
+												  usingBlock:^(NSNotification * notification) {
 		_createProjectOKButton.enabled = (_createProjectField.stringValue.length > 0); }];
-    
-    [NavigationController addDelegate:self];
+	
+	[NavigationController addDelegate:self];
 }
 
 - (void)reloadData
 {
-	NSArray * fetchArrayOfProjects = [self fetchArrayOfProjects];
+	NSArray <NSArray <Project *> *> * fetchArrayOfProjects = [self fetchArrayOfProjects];
 	arrayOfProjects = fetchArrayOfProjects;
 	
 	/* Update the bottom label with the number of projects and the number of shared projects */
 	NSInteger projectCount = 0;
-	for (NSArray * projects in arrayOfProjects) {
+	for (NSArray <Project *> * projects in arrayOfProjects)
 		projectCount += projects.count;
-	}
+	
 	self.bottomLabel.stringValue = [NSString stringWithFormat:@"%ld Projects", projectCount];
 	
 	[self.tableView reloadData];
@@ -82,11 +88,11 @@
 
 - (NSString *)defaultNewProjectName
 {
-	/* Generate a free name (ex: "Untitled Project (2)", "Untitled Project (3)", etc.) */
+	// Generate a free name (ex: "Untitled Project (2)", "Untitled Project (3)", etc.)
 	NSString * baseProjectName = @"Untitled Project", * projectName = baseProjectName;
 	
-	NSMutableArray * allProjectsName = [[NSMutableArray alloc] initWithCapacity:10];
-	for (NSArray * projects in arrayOfProjects) {
+	NSMutableArray <NSString *> * allProjectsName = [[NSMutableArray alloc] initWithCapacity:10];
+	for (NSArray <Project *> * projects in arrayOfProjects) {
 		for (Project * project in projects) { [allProjectsName addObject:project.name]; }
 	}
 	
@@ -108,36 +114,37 @@
 
 - (IBAction)newProjectAction:(id)sender
 {
-	[NSApp beginSheet:_createProjectWindow modalForWindow:self.view.window
-		modalDelegate:self didEndSelector:@selector(createProjectWindowDidEnd:returnCode:contextInfo:) contextInfo:NULL];
-}
-
-- (void)createProjectWindowDidEnd:(NSWindow *)window returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
-{
-	if (returnCode == NSOKButton) {
-		Project * project = [[Project alloc] initWithName:_createProjectField.stringValue
-											  description:@"" priority:0 identifier:-1];
-		[project insertIntoLibrary:[TBLibrary defaultLibrary]];
-		[self reloadData];
-	}
+	[self.view.window beginSheet:_createProjectWindow completionHandler:^(NSModalResponse returnCode) {
+		if (returnCode == NSModalResponseOK) {
+			NSString * const name = _createProjectField.stringValue;
+			if ([self.library projectWithName:name]) { // Disallow duplicate project name
+				NSString * message = [NSString stringWithFormat:@"Project name \"%@\" already existing.", name];
+				[[NSAlert alertWithStyle:NSAlertStyleWarning messageText:message
+						 informativeText:@"Try with another name." buttonTitles:@[ @"OK" ]] runModal];
+			} else {
+				Project * project = [[Project alloc] initWithName:_createProjectField.stringValue description:nil];
+				[self.library addProject:project];
+				[self reloadData];
+			}
+		}
+	}];
 }
 
 - (NSArray <NSArray <Project *> *> *)fetchArrayOfProjects
 {
-	NSMutableArray * array = [NSMutableArray arrayWithCapacity:10];
-	NSMutableArray * mutablePriorities = [NSMutableArray arrayWithCapacity:10];
+	NSMutableArray <NSArray <Project *> *> * array = [NSMutableArray arrayWithCapacity:10];
+	NSMutableArray <NSNumber *> * mutablePriorities = [NSMutableArray arrayWithCapacity:10];
 	
-	NSArray * allProjects = [Project allProjectsFromLibrary:[TBLibrary defaultLibrary]];
-	
-	int old_priority = -1;
+	ProjectPriority old_priority = -1;
 	NSMutableArray * projects = nil;
 	
-	for (Project * project in allProjects) {
-		int priority = project.priority;
+	NSArray <Project *> * sortedProjects = self.library.projects; // @TODO: Sort by priority (desc)
+	for (Project * project in sortedProjects) {
+		ProjectPriority priority = project.projectPriority;
 		if (priority != old_priority) {
-			if (projects) {
-				[array insertObject:(NSArray *)projects atIndex:0]; // Add low priority at the top
-			}
+			if (projects)
+				[array insertObject:projects atIndex:0]; // Add higher priority at the top
+			
 			projects = [[NSMutableArray alloc] initWithCapacity:10];
 			
 			old_priority = priority;
@@ -147,96 +154,41 @@
 		[projects addObject:project];
 	}
 	
-	if (projects) {
-		[array insertObject:(NSArray *)projects atIndex:0];
-	}
+	if (projects)
+		[array insertObject:projects atIndex:0];
 	
-	priorities = (NSArray *)mutablePriorities;
+	priorities = mutablePriorities;
 	
-	return (NSArray *)array;
-}
-
-- (NSArray *)allProjects
-{
-	NSMutableArray * projects = [NSMutableArray arrayWithCapacity:10];
-	
-	sqlite3 * db = [TBLibrary defaultLibrary].database;
-	
-	/* create a statement from an SQL string */
-	sqlite3_stmt * stmt = NULL;
-	const char sql[] = "SELECT name, description, priority, index_path, last_modification_date, Project_id FROM Project ORDER BY priority, Project_id ASC";
-	sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-	
-	/* execute statement and step over each row of the result set */
-	while (sqlite3_step(stmt) == SQLITE_ROW)
-	{
-		const char * filename_ptr = (const char *)sqlite3_column_text(stmt, 0);
-		const char * path_ptr = (const char *)sqlite3_column_text(stmt, 1);
-		int priority = sqlite3_column_int(stmt, 2);
-		
-		Project * project = [[Project alloc] initWithName:@(filename_ptr)
-											  description:@(path_ptr)
-												 priority:priority
-											   identifier:-1];
-		const char * index_path_ptr = (const char *)sqlite3_column_text(stmt, 3);
-		if (index_path_ptr)
-			project.indexPath = @(index_path_ptr);
-		
-		const char * last_modification_ptr = (const char *)sqlite3_column_text(stmt, 4);
-		NSDateFormatter * formatter = [[NSDateFormatter alloc] init];
-		formatter.locale = [NSLocale currentLocale];
-		formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
-		formatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"]; // Set to GMT time zone
-		NSString * dateString = @(last_modification_ptr);
-		project.lastModificationDate = [formatter dateFromString:dateString];
-		
-		project.identifier = sqlite3_column_int(stmt, 5);
-		
-		[projects addObject:project];
-	}
-	
-	/* destroy and release the statement */
-	sqlite3_finalize(stmt);
-	
-	return projects;
+	return array;
 }
 
 - (Project *)projectAtIndexPath:(NSIndexPath *)indexPath
 {
-	return ((NSArray *)arrayOfProjects[indexPath.section])[indexPath.row];
+	return arrayOfProjects[indexPath.section][indexPath.row];
 }
 
-#pragma mark - Actions -
+#pragma mark - Actions
 
 - (IBAction)deleteProjectAction:(id)sender
 {
 	NSIndexPath * selectedIndexPath = self.tableView.indexPathOfSelectedRow;
 	Project * project = [self projectAtIndexPath:selectedIndexPath];
 	
-    if (project.steps.count > 0) { // Show a confirmation if the projet contains steps
-		NSAlert * alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:@"Do you want to keep all files from \"%@\" in the library or move them to the trash?", project.name]
-										  defaultButton:@"Keep File"
-										alternateButton:@"Move to Trash"
-											otherButton:@"Cancel"
-							  informativeTextWithFormat:@"This action can't be undone."];
-		alert.alertStyle = NSWarningAlertStyle;
+	if (project.steps.count > 0) { // Show a confirmation if the projet contains steps
+		NSString * message = [NSString stringWithFormat:@"Do you want to keep all files from \"%@\" in the library or move them to the trash?", project.name];
+		NSAlert * alert = [NSAlert alertWithStyle:NSAlertStyleWarning
+									  messageText:message informativeText:@"This action can't be undone."
+									 buttonTitles:@[ @"Move to Trash", @"Cancel", @"Keep File" ]];
 		alert.showsSuppressionButton = YES;
-		[alert beginSheetModalForWindow:self.view.window
-						  modalDelegate:self
-						 didEndSelector:@selector(deleteItemAlertDidEnd:returnCode:contextInfo:)
-							contextInfo:(__bridge_retained void *)project];
-    } else { // Else, remove the projet directly
+		[alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
+			if (returnCode != NSAlertSecondButtonReturn/*Cancel*/) {
+				BOOL keepFile = (returnCode == NSAlertThirdButtonReturn/*Keep File*/);
+				[self deleteProjet:project keepFile:keepFile];
+				[self reloadData];
+			}
+		}];
+	} else { // Else, remove the projet directly
 		[self deleteProjet:project keepFile:NO];
-		[self reloadData];
-    }
-}
-
-- (void)deleteItemAlertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
-{
-	if (returnCode == NSAlertDefaultReturn || returnCode == NSAlertAlternateReturn) {
-		Project * project = (__bridge Project *)contextInfo;
-		BOOL keepFile = (returnCode == NSAlertDefaultReturn);
-		[self deleteProjet:project keepFile:keepFile];
 		[self reloadData];
 	}
 }
@@ -250,26 +202,22 @@
 	if (success)
 		[aProjet delete];
 	else {
-		NSAlert * alert = [NSAlert alertWithMessageText:@"Error when moving folder to trash"
-										  defaultButton:@"OK"
-										alternateButton:nil
-											otherButton:nil
-							  informativeTextWithFormat:@"Try to close others applications and then retry to delete."];
-		[alert beginSheetModalForWindow:self.view.window
-						  modalDelegate:nil
-						 didEndSelector:NULL
-							contextInfo:nil];
+		NSAlert * alert = [NSAlert alertWithStyle:NSAlertStyleCritical
+									  messageText:@"Error when moving folder to trash"
+								  informativeText:@"Try to close others applications and then retry to delete."
+									 buttonTitles:@[ @"OK" ]];
+		[alert runModal];
 	}
 }
 
-#pragma mark - Navigation Controller Delegate -
+#pragma mark - Navigation Controller Delegate
 
 - (void)navigationControllerWillPopViewController:(NSViewController *)viewController animated:(BOOL)animated
 {
-    [self reloadData];
+	[self reloadData];
 }
 
-#pragma mark - TableView DataSource -
+#pragma mark - TableView DataSource
 
 - (NSString *)placeholderForTableView:(TableView *)tableView
 {
@@ -281,7 +229,7 @@
 	return sharedHostNames.count + arrayOfProjects.count;
 }
 
-- (NSArray *)titlesForSectionsInTableView:(TableView *)tableView
+- (NSArray <NSArray *> *)titlesForSectionsInTableView:(TableView *)tableView
 {
 	NSMutableArray * titles = [NSMutableArray arrayWithCapacity:10];
 	for (NSString * name in sharedHostNames)
@@ -290,7 +238,7 @@
 	NSInteger count = arrayOfProjects.count;
 	for (int i = 0; i < count; i++) {
 		NSNumber * index = priorities[i];
-		[titles addObject:[NSString stringWithFormat:@"Priority: %@", priorityNames[index.intValue]]];
+		[titles addObject:[NSString stringWithFormat:@"Priority: %@", ProjectPriorityDescription(index.intValue)]];
 	}
 	
 	return titles;
@@ -298,12 +246,11 @@
 
 - (NSInteger)tableView:(TableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-	if (section < sharedHostNames.count) {
-		return ((NSArray *)arrayOfSharedProjects[section]).count;
-	}
+	if (section < sharedHostNames.count)
+		return arrayOfSharedProjects[section].count;
 	
 	NSInteger newSection = section - sharedHostNames.count;
-	return ((NSArray *)arrayOfProjects[newSection]).count;
+	return arrayOfProjects[newSection].count;
 }
 
 - (TableViewCell *)tableView:(TableView *)tableView cellForIndexPath:(NSIndexPath *)indexPath
@@ -314,11 +261,11 @@
 	
 	NSInteger section = indexPath.section;
 	if (indexPath.section < sharedHostNames.count) {
-		NSDictionary * attributes = ((NSArray *)arrayOfSharedProjects[section])[indexPath.row];
+		NSDictionary * attributes = arrayOfSharedProjects[section][indexPath.row];
 		cell.title = [attributes valueForKey:@"name"];
 	} else {
 		NSInteger newSection = section - sharedHostNames.count;
-		Project * project = ((NSArray *)arrayOfProjects[newSection])[indexPath.row];
+		Project * project = arrayOfProjects[newSection][indexPath.row];
 		cell.title = project.name;
 	}
 	
@@ -327,19 +274,17 @@
 
 - (BOOL)tableView:(TableView *)tableView couldCloseSection:(NSInteger)section
 {
-	if (section < sharedHostNames.count)// If the section is into shared projects
-		return YES;
-	
-	return NO;
+	return (section < sharedHostNames.count); // Only shared projects sections
 }
 
-#pragma mark - TableView Delegate -
+#pragma mark - TableView Delegate
 
 - (void)tableView:(TableView *)tableView didSelectCell:(TableViewCell *)cell atIndexPath:(NSIndexPath *)indexPath
 {
 	NSInteger section = indexPath.section - sharedHostNames.count;
-	Project * project = ((NSArray *)arrayOfProjects[section])[indexPath.row];
+	Project * project = arrayOfProjects[section][indexPath.row];
 	ProjectViewController * projectViewController = [(AppDelegate *)NSApp.delegate projectViewController];
+	projectViewController.library = self.library;
 	projectViewController.project = project;
 	[NavigationController pushViewController:projectViewController animated:YES];
 }
@@ -347,10 +292,9 @@
 - (NSMenu *)rightClickMenuForTableView:(TableView *)tableView forCellAtIndexPath:(NSIndexPath *)indexPath
 {
 	NSMenu * menu = [[NSMenu alloc] initWithTitle:@"right-tableView"];
-	Project * project = ((NSArray *)arrayOfProjects[indexPath.section])[indexPath.row];
+	Project * project = arrayOfProjects[indexPath.section][indexPath.row];
 	[menu addItemWithTitle:(project.steps.count > 0) ? @"Delete..." : @"Delete"
-					target:self
-					action:@selector(deleteProjectAction:)];
+					target:self action:@selector(deleteProjectAction:)];
 	return menu;
 }
 

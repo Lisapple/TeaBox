@@ -22,4 +22,17 @@
 #endif
 
 
-#define kMaxTransmissionUnit 7981 // 7981 for WLAN, 1500 for Eternet
+#define DefaultPathForDirectory(directory) \
+	{ NSSearchPathForDirectoriesInDomains(directory, NSUserDomainMask, YES).firstObject ?: NSTemporaryDirectory() }
+//NSString * DefaultPathForDirectory(NSSearchPathDirectory directory);
+//NSString * DefaultPathForDirectory(NSSearchPathDirectory directory) {
+//	NSArray <NSString *> * paths = NSSearchPathForDirectoriesInDomains(directory, NSUserDomainMask, YES /* Expand the tilde */);
+//	return paths.firstObject ?: NSTemporaryDirectory();
+//}
+
+#define IS_MIGRATING 1
+#if IS_MIGRATING
+#  define MIGRATION_ATTRIBUTE
+#else
+#  define MIGRATION_ATTRIBUTE DEPRECATED_MSG_ATTRIBUTE("Use it only for migration purpose.")
+#endif

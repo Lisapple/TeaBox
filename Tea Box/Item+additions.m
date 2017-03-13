@@ -9,7 +9,7 @@
 #import "Item+additions.h"
 #import "SandboxHelper.h"
 
-@implementation Item (additions)
+@implementation FileItem (additions)
 
 - (BOOL)moveToPath:(NSString *)path
 {
@@ -19,23 +19,28 @@
 - (BOOL)moveToTrash
 {
 	__block BOOL moved = NO;
-	NSString * path = [self.library pathForItem:self];
-	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+	[SandboxHelper executeWithSecurityScopedAccessToURL:self.URL block:^(NSError * error) {
 		if (!error) {
 			NSFileManager * fileManager = [NSFileManager defaultManager];
-			if ([fileManager respondsToSelector:@selector(trashItemAtURL:resultingItemURL:error:)]) { // OSX.8+
-				moved = (BOOL)[fileManager trashItemAtURL:[NSURL fileURLWithPath:path] resultingItemURL:nil error:nil];
-			} else {
-				const char * sourcePath = path.UTF8String;
-				char * targetPath = NULL;
-				OSStatus error = FSPathMoveObjectToTrashSync(sourcePath, &targetPath, kFSFileOperationDefaultOptions);
-				moved = (targetPath != NULL);
-				
-				if (!moved) NSLog(@"move to trash fails for %@ (%d)", path, error);
-			}
+			moved = (BOOL)[fileManager trashItemAtURL:self.URL resultingItemURL:nil error:nil];
 		}
 	}];
 	return moved;
+}
+
+@end
+
+
+@implementation Item (QLPreviewItem)
+
+- (NSURL *)previewItemURL
+{
+	return [(FileItem *)self URL];
+}
+
+- (NSString *)previewItemTitle
+{
+	return [(FileItem *)self URL].lastPathComponent;
 }
 
 @end

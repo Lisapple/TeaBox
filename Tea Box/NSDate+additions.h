@@ -11,4 +11,8 @@
 + (NSDate *)dateFromSQLiteDate:(NSString *)dateString;
 - (NSString *)SQLiteDateString;
 
+// "2017-02-02T12:00:00+00:00
++ (NSDate *)dateWithISO8601Format:(NSString *)dateString;
+- (NSString *)iso8601DateString;
+
 @end

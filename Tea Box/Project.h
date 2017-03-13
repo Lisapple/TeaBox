@@ -6,40 +6,77 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
+#import "Step.h"
+#import "Item.h"
+#import "TBCoder.h"
 
+typedef NS_ENUM(NSUInteger, ProjectPriority) {
+	ProjectPriorityNone,
+	ProjectPriorityLow,
+	ProjectPriorityNormal,
+	ProjectPriorityHigh
+};
 
-#import "TBLibrary.h"
+extern ProjectPriority ProjectPriorityWithString(NSString * _Nonnull string);
+extern NSString * _Nullable ProjectPriorityDescription(ProjectPriority priority);
 
-@class TBLibrary;
+NS_ASSUME_NONNULL_BEGIN
+
 @class Step;
-@interface Project : NSObject
+@protocol TBCoding;
+@protocol TBDecoding;
+@interface Project : NSObject <TBCoding, TBDecoding>
 
-@property (nonatomic, strong) NSString * name;
-@property (nonatomic, strong) NSString * description;
-@property (nonatomic, strong) NSString * indexPath; // The path of the index text file
-@property (unsafe_unretained, nonatomic, readonly) NSDate * creationDate;
-@property (nonatomic, strong) NSDate * lastModificationDate;
-@property (nonatomic, strong) TBLibrary * library;
-@property (nonatomic, assign) int priority;
-@property (nonatomic, assign) int identifier;
+@property (strong) NSString * path;
+@property (strong) NSString * name;
+@property (copy, nullable) NSString * description;
+@property (readonly) NSDate * creationDate;
+@property (strong, nullable) NSDate * lastModificationDate;
+@property (assign) ProjectPriority projectPriority; // @FIXME: Should be `priority` (once actual `priority` property removed)
 
-+ (NSArray *)allProjectsFromLibrary:(TBLibrary *)library;
-+ (Project *)projectWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library;
+@property (readonly) NSArray <Step *> * steps;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
-- (instancetype)initWithName:(NSString *)name description:(NSString *)description priority:(int)priority identifier:(int)identifier NS_DESIGNATED_INITIALIZER;
-- (BOOL)insertIntoLibrary:(TBLibrary *)library;
+- (instancetype)initWithName:(NSString *)name description:(nullable NSString *)description NS_DESIGNATED_INITIALIZER;
 
-- (void)update;
+- (void)addStep:(Step *)step;
+- (void)addSteps:(NSArray <Step *> *)steps;
+- (void)removeStep:(Step *)step;
 
-- (void)updateValue:(id)value forKey:(NSString *)key;
+- (void)markAsUpdated;
 
-- (NSArray *)steps;
-- (Step *)stepWithIdentifier:(int)identifier;
+- (nullable Step *)stepForItem:(Item *)item; // ???: Useful?
 
-- (BOOL)delete;
-
-// Private
-- (instancetype)initWithCreationDate:(NSDate *)creationDate NS_DESIGNATED_INITIALIZER;
+- (BOOL)removeFromDisk;
 
 @end
+
+NS_ASSUME_NONNULL_END
+
+#pragma mark - Deprecated
+#include <sqlite3.h>
+#import "TBLibrary.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+@class TBLibrary;
+@interface Project ()
+
+@property (nonatomic, strong) NSString * indexPath DEPRECATED_ATTRIBUTE; // The path of the index text file
+@property (nonatomic, strong) TBLibrary * library DEPRECATED_ATTRIBUTE;
+@property (nonatomic, assign) NSInteger priority DEPRECATED_ATTRIBUTE;
+@property (nonatomic, assign) NSInteger identifier MIGRATION_ATTRIBUTE;
+
++ (NSArray <Project *> *)allProjectsFromLibrary:(TBLibrary *)library DEPRECATED_ATTRIBUTE;
++ (Project *)projectWithIdentifier:(NSInteger)identifier fromLibrary:(TBLibrary *)library MIGRATION_ATTRIBUTE;
+
+- (instancetype)initWithCreationDate:(NSDate *)creationDate DEPRECATED_ATTRIBUTE;
+- (instancetype)initWithName:(NSString *)name description:(NSString *)description priority:(NSInteger)priority identifier:(NSInteger)identifier DEPRECATED_ATTRIBUTE;
+- (BOOL)insertIntoLibrary:(TBLibrary *)library UNAVAILABLE_ATTRIBUTE;
+- (void)update UNAVAILABLE_ATTRIBUTE;
+- (void)updateValue:(id)value forKey:(NSString *)key DEPRECATED_ATTRIBUTE;
+- (Step *)stepWithIdentifier:(NSInteger)identifier DEPRECATED_ATTRIBUTE;
+- (BOOL)delete DEPRECATED_ATTRIBUTE;
+@end
+
+NS_ASSUME_NONNULL_END

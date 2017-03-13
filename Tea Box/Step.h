@@ -6,37 +6,63 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "TBCoder.h"
 
-#import "TBLibrary.h"
+NS_ASSUME_NONNULL_BEGIN
+
+extern NSString * const StepDidUpdateNotification;
 
 @class TBLibrary;
 @class Project;
 @class Item;
-@interface Step : NSObject
+@protocol TBCoding;
+@protocol TBDecoding;
+@interface Step : NSObject <TBCoding, TBDecoding>
 
-@property (nonatomic, strong) NSString * name;
-@property (nonatomic, strong) NSString * description;
-@property (nonatomic, strong) Project * project;
-@property (nonatomic, strong) TBLibrary * library;
-@property (nonatomic, readonly, assign) int identifier;
-@property (nonatomic, assign, getter = isClosed) BOOL closed;
+@property (strong) NSString * path;
+@property (strong) NSString * name;
+@property (assign, getter = isClosed) BOOL closed; // @TODO: Rename to `hidden`
 
-+ (NSArray *)stepsWithProjectIdentifier:(int)projectID fromLibrary:(TBLibrary *)library;
-+ (Step *)stepWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library;
+@property (readonly) NSArray <Item *> * items;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
-- (instancetype)initWithName:(NSString *)name description:(NSString *)description project:(Project *)project;
-- (instancetype)initWithName:(NSString *)name description:(NSString *)description closed:(BOOL)closed identifier:(int)identifier project:(Project *)project NS_DESIGNATED_INITIALIZER;
-- (BOOL)insertIntoLibrary:(TBLibrary *)library;
+- (instancetype)initWithName:(NSString *)name NS_DESIGNATED_INITIALIZER;
 
-- (void)update;
+- (void)addItem:(Item *)item;
+- (void)addItems:(NSArray <Item *> *)items;
+- (void)removeItem:(Item *)item;
 
-- (NSUInteger)itemsCount;
-- (NSArray *)items; // Don't call this method on -[Item initWithFilename:type:rowIndex:identifier:step:]
-
-- (void)updateValue:(id)value forKey:(NSString *)key;
-
-- (BOOL)delete;
+- (BOOL)removeFromDisk;
 
 @end
+
+
+NS_ASSUME_NONNULL_END
+
+
+#pragma mark - Deprecated
+
+#import "TBLibrary.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface Step ()
+
+@property (nonatomic, strong) NSString * description DEPRECATED_ATTRIBUTE;
+@property (nonatomic, strong) Project * project DEPRECATED_ATTRIBUTE;
+@property (nonatomic, strong) TBLibrary * library DEPRECATED_ATTRIBUTE;
+@property (nonatomic, readonly, assign) NSInteger identifier DEPRECATED_ATTRIBUTE;
+
++ (NSArray <Step *> *)stepsWithProjectIdentifier:(NSInteger)projectID fromLibrary:(TBLibrary *)library MIGRATION_ATTRIBUTE;
++ (Step *)stepWithIdentifier:(int)identifier fromLibrary:(TBLibrary *)library MIGRATION_ATTRIBUTE;
+- (instancetype)initWithName:(NSString *)name description:(NSString *)description project:(Project *)project DEPRECATED_ATTRIBUTE;
+- (instancetype)initWithName:(NSString *)name description:(NSString *)description closed:(BOOL)closed identifier:(NSInteger)identifier project:(Project *)project DEPRECATED_ATTRIBUTE;
+- (BOOL)insertIntoLibrary:(TBLibrary *)library UNAVAILABLE_ATTRIBUTE;
+- (void)update UNAVAILABLE_ATTRIBUTE;
+- (NSUInteger)itemsCount UNAVAILABLE_ATTRIBUTE;
+- (void)updateValue:(id)value forKey:(NSString *)key DEPRECATED_ATTRIBUTE;
+- (BOOL)delete DEPRECATED_ATTRIBUTE;
+
+@end
+
+NS_ASSUME_NONNULL_END

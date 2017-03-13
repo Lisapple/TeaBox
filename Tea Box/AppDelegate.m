@@ -11,6 +11,8 @@
 @import Fabric;
 @import Crashlytics;
 
+#import "NSAlert+additions.h"
+
 @implementation AppDelegate
 
 + (AppDelegate *)app
@@ -26,7 +28,7 @@
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification
 {
-	[NavigationController pushViewController:_mainViewController animated:NO];
+	[Fabric with:@[ Crashlytics.class ]];
 	
 	[NavigationController addDelegate:self];
 	showingProjectViewController = NO;
@@ -49,8 +51,7 @@
 				if (choosenURL) {
 					path = [choosenURL.path stringByAppendingString:@"/Library.teaboxdb"];
 				} else {
-					NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-					NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
+					NSString * documentPath = DefaultPathForDirectory(NSDocumentDirectory);
 					path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
 				}
 				NSAssert1(path != nil, @"No path can be get from %@", choosenURL);
@@ -59,9 +60,8 @@
 				NSURL * const defaultLibraryURL = [[NSBundle mainBundle] URLForResource:@"Default Library/Library" withExtension:@"teaboxdb"];
 				BOOL success = [[NSFileManager defaultManager] copyItemAtPath:defaultLibraryURL.path toPath:path error:nil];
 				
-				if (success) { // If copy fails, create an empty one
-					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
-				}
+				if (success) // If copy fails, create an empty one
+					[TBLibrary createLibraryAtPath:path name:@"com.lisacintosh.teabox.default-library"];
 				
 				NSURLBookmarkCreationOptions bookmarkOptions = 0;
 #if _SANDBOX_SUPPORTED_
@@ -69,7 +69,8 @@
 #endif
 				NSError * error = nil;
 				NSData * bookmarkData = [[NSURL fileURLWithPath:path] bookmarkDataWithOptions:bookmarkOptions
-															   includingResourceValuesForKeys:nil relativeToURL:nil error:&error];
+															   includingResourceValuesForKeys:nil
+																				relativeToURL:nil error:&error];
 				if (bookmarkData) {
 					NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 					[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
@@ -80,7 +81,7 @@
 				NSString * version = [NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"];
 				[[NSUserDefaults standardUserDefaults] setObject:version forKey:@"last-launch-app-version"];
 				
-				[_mainViewController reloadData];
+				[NavigationController pushViewController:_mainViewController animated:NO];
 				self.window.delegate = self;
 				[self.window makeKeyAndOrderFront:nil]; // Order front the window only after loading the navigationController and the main viewController
 			};
@@ -88,14 +89,14 @@
 			return ;
 			
 		} else { // Ask for user what to do (create a new library or choose an existing, or quit)
-			NSAlert * alert = [NSAlert alertWithMessageText:@"No Library Founds"
-											  defaultButton:@"Choose Library..."
-											alternateButton:@"Create New"
-												otherButton:@"Quit"
-								  informativeTextWithFormat:@"The default Tea Box library can't be found. Do you want to use an existing library or create a new empty one?"];
+			
+			NSAlert * alert = [NSAlert alertWithStyle:NSAlertStyleWarning
+										  messageText:@"No Library Founds"
+									  informativeText:@"The default Tea Box library can't be found. Do you want to use an existing library or create a new empty one?"
+										 buttonTitles:@[ @"Create New", @"Quit", @"Choose Library..." ]];
 			
 			NSInteger returnCode = [alert runModal];
-			if (returnCode == NSAlertDefaultReturn) {// "Choose Library..."
+			if (returnCode == NSAlertThirdButtonReturn/*Choose Library*/) {
 				
 				NSOpenPanel * openPanel = [NSOpenPanel openPanel];
 				openPanel.allowsMultipleSelection = NO;
@@ -103,7 +104,7 @@
 				openPanel.prompt = @"Open";
 				if ([openPanel runModal] == NSFileHandlingPanelOKButton) {
 					NSString * path = openPanel.URL.path;
-					[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
+					[TBLibrary createLibraryAtPath:path name:@"com.lisacintosh.teabox.default-library"];
 					
 					NSURLBookmarkCreationOptions bookmarkOptions = 0;
 #if _SANDBOX_SUPPORTED_
@@ -123,42 +124,18 @@
 				} else {
 					[NSApp terminate:nil];
 				}
-			} else if (returnCode == NSAlertAlternateReturn) {// "Create New"
+			} else if (returnCode == NSAlertFirstButtonReturn/*Create New*/) {
 				/* Create a new library with a database get from the application bundle */
-				NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-				NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
+				NSString * documentPath = DefaultPathForDirectory(NSDocumentDirectory);
 				NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
-				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
 				
-			} else {// "Quit"
-				[NSApp terminate:nil];
-			}
-		}
-	} else if (!defaultLibrary.database) {
-		/* If the database can't be initialized, try to get a backup, if no backup available, show an alert to create a new database. */
-		
-		/* Try to revert the backup */
-		BOOL success = [[TBLibrary defaultLibrary] revertToBackup];
-		
-		if (success) {
-			/* Use the default library but initialize the database */
-			NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-			NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
-			NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
-			[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
-		} else {
-			NSAlert * alert = [NSAlert alertWithMessageText:@"The library can't be initialized. Do you want to create a new library?"
-											  defaultButton:@"Create New"
-											alternateButton:nil
-												otherButton:@"Quit"
-								  informativeTextWithFormat:@""];
-			if ([alert runModal] == NSAlertDefaultReturn) {
-				/* Create a new library with a database get from the application bundle */
-				NSArray * documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES /* Expand the tilde (~/Documents => /Users/Max/Documents) */);
-				NSString * documentPath = (documentPaths.count > 0) ? documentPaths.firstObject : NSTemporaryDirectory();
-				NSString * path = [documentPath stringByAppendingString:@"/Library.teaboxdb"];
-				[TBLibrary createLibraryWithName:@"com.lisacintosh.teabox.default-library" atPath:path isSharedLibrary:NO];
-			} else {// "Quit"
+				// Copy the default library
+				NSURL * const defaultLibraryURL = [[NSBundle mainBundle] URLForResource:@"Default Library/Library" withExtension:@"teaboxdb"];
+				[[NSFileManager defaultManager] copyItemAtPath:defaultLibraryURL.path toPath:path error:nil];
+				
+				[TBLibrary createLibraryAtPath:path name:@"com.lisacintosh.teabox.default-library"];
+				
+			} else { // "Quit"
 				[NSApp terminate:nil];
 			}
 		}
@@ -169,6 +146,7 @@
 	
 	self.window.delegate = self;
 	[self.window makeKeyAndOrderFront:nil]; // Order front the window only after loading the navigationController and the main viewController
+	[NavigationController pushViewController:_mainViewController animated:NO];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -198,10 +176,9 @@
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
 {
-	// @TODO: check that the backup file is older than the database file before creating a backup
+	if (![[TBLibrary defaultLibrary] save])
+		NSLog(@"Error saving library at %@", [TBLibrary defaultLibrary].path);
 	
-	[[TBLibrary defaultLibrary] createBackup];
-	[[TBLibrary defaultLibrary] close];
 	return NSTerminateNow;
 }
 

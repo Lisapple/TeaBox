@@ -13,39 +13,72 @@
 #import "Step.h"
 #import "Item.h"
 
-@interface TBLibrary : NSObject
-{
-	sqlite3 * database;
-}
+NS_ASSUME_NONNULL_BEGIN
 
-@property (nonatomic, strong) NSString * path, * databasePath;
-@property (nonatomic, readonly, getter = isShared) BOOL shared;
+@class Project;
+@class Step;
+@protocol TBCoding;
+@protocol TBDecoding;
+@interface TBLibrary : NSObject <TBCoding, TBDecoding>
+
+@property (readonly, strong) NSString * path;
+@property (readonly, strong) NSString * name;
+@property (readonly) NSArray <Project *> * projects;
 
 + (TBLibrary *)defaultLibrary;
-
-+ (TBLibrary *)createLibraryWithName:(NSString *)name atPath:(NSString *)path isSharedLibrary:(BOOL)shared;
 + (TBLibrary *)libraryWithName:(NSString *)name;
++ (TBLibrary *)createLibraryAtPath:(NSString *)path name:(nullable NSString *)name;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
-- (instancetype)initWithPath:(NSString *)path isSharedLibrary:(BOOL)shared NS_DESIGNATED_INITIALIZER;
-- (sqlite3 *)database NS_RETURNS_INNER_POINTER;
-- (void)close;
+- (nullable instancetype)initWithPath:(NSString *)path NS_DESIGNATED_INITIALIZER;
 
-- (int)createSavepoint;
-- (BOOL)releaseSavepoint:(int)identifier;
-- (BOOL)goBackToSavepoint:(int)identifier;
-
-- (BOOL)createBackup;
-- (BOOL)revertToBackup;
-- (BOOL)deleteBackup;
+- (nullable Project *)projectWithName:(NSString *)name;
+- (void)addProject:(Project *)project;
+- (void)addProjects:(NSArray <Project *> *)projects;
+- (void)removeProject:(Project *)project;
 
 - (BOOL)moveLibraryToPath:(NSString *)newPath error:(NSError **)error;
 - (BOOL)copyLibraryToPath:(NSString *)newPath error:(NSError **)error;
 
-- (NSString *)pathForProjectFolder:(Project *)project;
-- (NSString *)pathForStepFolder:(Step *)step;
-- (NSString *)pathForItem:(Item *)item;
+/// The returned URL contains the relative path from Library and the base URL to the library location on disk.
+- (NSURL *)URLForProject:(Project *)project;
 
-- (NSURL *)URLForItem:(Item *)item;
+- (NSString *)pathForProjectFolder:(Project *)project DEPRECATED_ATTRIBUTE;
+- (NSString *)pathForStepFolder:(Step *)step;
+- (nullable NSString *)pathForItem:(Item *)item;
+
+- (BOOL)reloadFromDisk;
+- (BOOL)save;
 
 @end
+
+NS_ASSUME_NONNULL_END
+
+
+
+NS_ASSUME_NONNULL_BEGIN
+@interface TBLibrary ()
+{
+	sqlite3 * database;
+}
+@property (nonatomic, strong) NSString * databasePath DEPRECATED_ATTRIBUTE;
+@property (nonatomic, readonly, getter = isShared) BOOL shared DEPRECATED_ATTRIBUTE;
+
++ (TBLibrary *)createLibraryWithName:(NSString *)name atPath:(NSString *)path isSharedLibrary:(BOOL)shared UNAVAILABLE_ATTRIBUTE;
+
+- (instancetype)initWithPath:(NSString *)path isSharedLibrary:(BOOL)shared UNAVAILABLE_ATTRIBUTE;
+- (sqlite3 *)database NS_RETURNS_INNER_POINTER DEPRECATED_ATTRIBUTE;
+- (void)close DEPRECATED_ATTRIBUTE;
+
+- (int)createSavepoint UNAVAILABLE_ATTRIBUTE;
+- (BOOL)releaseSavepoint:(int)identifier UNAVAILABLE_ATTRIBUTE;
+- (BOOL)goBackToSavepoint:(int)identifier UNAVAILABLE_ATTRIBUTE;
+
+- (BOOL)createBackup UNAVAILABLE_ATTRIBUTE;
+- (BOOL)revertToBackup UNAVAILABLE_ATTRIBUTE;
+- (BOOL)deleteBackup UNAVAILABLE_ATTRIBUTE;
+
+- (NSURL *)URLForItem:(Item *)item DEPRECATED_ATTRIBUTE;
+
+@end
+NS_ASSUME_NONNULL_END

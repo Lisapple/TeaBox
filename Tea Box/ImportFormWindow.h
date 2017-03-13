@@ -9,11 +9,13 @@
 #import "SheetWindow.h"
 #import "Step.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class ImportFormWindow;
 @protocol ImportFormWindowDelegate <NSObject>
 
 @optional
-- (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object ofType:(NSString *)itemType proposedFilename:(NSString *)filename;
+- (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object ofType:(FileItemType)itemType proposedFilename:(nullable NSString *)filename;
 - (void)importFormWindowDidCancel:(ImportFormWindow *)window;
 
 @end
@@ -24,9 +26,9 @@
 	id __unsafe_unretained objectValue;
 }
 
-@property (nonatomic, strong) id <ImportFormWindowDelegate> importDelegate;
+@property (strong) id <ImportFormWindowDelegate> importDelegate;
 
-@property (unsafe_unretained, nonatomic, readonly) id objectValue;
+@property (unsafe_unretained, readonly) id objectValue;
 @property (strong) Step * target;
 
 @end
@@ -42,7 +44,7 @@
 
 @interface _ImportFormImageView : NSImageView
 
-@property (nonatomic, strong) id <_ImportFormImageViewDelegate> delegate;
+@property (strong) id <_ImportFormImageViewDelegate> delegate;
 
 @end
 
@@ -72,5 +74,29 @@
 @interface TextImportFormWindow : ImportFormWindow
 
 @property (unsafe_unretained) IBOutlet NSTextView * inputTextView;
+@property (nullable, strong) TextItem * editingItem;
 
 @end
+
+
+@interface TaskImportFormWindow : ImportFormWindow
+
+@property (unsafe_unretained) IBOutlet NSButton * okButton;
+@property (unsafe_unretained) IBOutlet NSTextField * nameField;
+
+@end
+
+
+@interface CountdownImportFormWindow : ImportFormWindow
+
+@property (unsafe_unretained) IBOutlet NSButton * okButton;
+
+@property (unsafe_unretained) IBOutlet NSTextField * nameField;
+@property (unsafe_unretained) IBOutlet NSTextField * valueField;
+@property (unsafe_unretained) IBOutlet NSStepper * valueStepper;
+@property (unsafe_unretained) IBOutlet NSTextField * maximumField;
+@property (unsafe_unretained) IBOutlet NSStepper * maximumStepper;
+
+@end
+
+NS_ASSUME_NONNULL_END

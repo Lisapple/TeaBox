@@ -103,7 +103,6 @@
 @interface ImageImportFormWindow ()
 
 @property (nonatomic, strong) NSURLConnection * connection;
-@property (nonatomic, strong) NSMutableData * receivedData;
 @property (nonatomic, strong) NSURL * imageURL;
 
 @end
@@ -120,9 +119,8 @@
 {
 	_descriptionLabel.stringValue = @"";
 	
-	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
-		[self.importDelegate importFormWindow:self didEndWithObject:_imageView.image ofType:kItemTypeImage proposedFilename:_imageURL.lastPathComponent];
-	}
+	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)])
+		[self.importDelegate importFormWindow:self didEndWithObject:_imageView.image ofType:FileItemTypeImage proposedFilename:_imageURL.lastPathComponent];
 	
 	[super okAction:sender];
 }
@@ -143,52 +141,28 @@
 
 - (void)startDownloadingImageAtURL:(NSURL *)imageURL
 {
-	/* Start the spinning wheel */
 	[_progressIndicator startAnimation:nil];
 	
-	/* Disable the "OK" button */
 	// @TODO: Disable the "OK" button
 	
-	/* Remove the previous image */
 	_imageView.image = nil;
-	
-	/* Download the image asynchronously */
 	_imageURL = imageURL;
-	_receivedData = [[NSMutableData alloc] initWithCapacity:(1024 * 1024 * 4)]; // 4 Mb sized
 	
+	NSURLSessionConfiguration * configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+	NSURLSession * session = [NSURLSession sessionWithConfiguration:configuration];
 	NSURLRequest * request = [[NSURLRequest alloc] initWithURL:imageURL];
-	_connection = [[NSURLConnection alloc] initWithRequest:request
-												 delegate:self
-										 startImmediately:YES];
-}
-
-- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
-{
-	[_receivedData appendData:data];
-}
-
-- (void)connectionDidFinishLoading:(NSURLConnection *)connection
-{
-	// @TODO: Re-enable the "OK" button
-	
-	NSImage * image = [[NSImage alloc] initWithData:_receivedData];
-	if (image) {
-		_descriptionLabel.stringValue = @"";
-		_imageView.image = image;
-	} else {
-		_descriptionLabel.stringValue = @"The image can be downloaded.";
-	}
-	
-	/* Stop the spinning wheel */
-	[_progressIndicator stopAnimation:nil];
-}
-
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
-{
-	/* Stop the spinning wheel */
-	[_progressIndicator stopAnimation:nil];
-	
-	_descriptionLabel.stringValue = error.localizedDescription;
+	[[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+		
+		_imageView.image = [[NSImage alloc] initWithData:data];
+		if (_imageView.image)
+			_descriptionLabel.stringValue = @"";
+		else if (error)
+			_descriptionLabel.stringValue = error.localizedDescription;
+		else
+			_descriptionLabel.stringValue = @"The image can be downloaded.";
+		
+		[_progressIndicator stopAnimation:nil];
+	}] resume];
 }
 
 @end
@@ -204,7 +178,6 @@
     if ((self = [super initWithCoder:aDecoder])) {
 		_inputTextField.delegate = self;
     }
-    
     return self;
 }
 
@@ -235,14 +208,12 @@
 	NSURL * webURL = [self URLFromString:_inputTextField.stringValue];
 	
 	if (webURL) {
-		if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
-			[self.importDelegate importFormWindow:self didEndWithObject:webURL ofType:kItemTypeWebURL proposedFilename:webURL.lastPathComponent];
-		}
+		if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)])
+			[self.importDelegate importFormWindow:self didEndWithObject:webURL ofType:FileItemTypeWebURL proposedFilename:webURL.lastPathComponent];
 		
 		[super okAction:sender];
-	} else {
+	} else
 		_descriptionLabel.stringValue = @"Error on URL format.";
-	}
 }
 
 @end
@@ -250,28 +221,121 @@
 
 @implementation TextImportFormWindow
 
-@synthesize inputTextView = _inputTextView;
-
-- (instancetype)initWithCoder:(NSCoder *)aDecoder
+- (void)setEditingItem:(TextItem *)editingItem
 {
-    if ((self = [super initWithCoder:aDecoder])) {
-    }
-    
-    return self;
+	_editingItem = editingItem;
+	_inputTextView.string = editingItem.content;
 }
 
 - (IBAction)okAction:(id)sender
 {
 	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
-		NSAttributedString * attrString = _inputTextView.attributedString;
+		NSString * string = _inputTextView.string;
 		// Get five first words from text as filename
-		NSArray * words = [attrString.string componentsSeparatedByString:@" "];
+		NSArray <NSString *> * words = [string componentsSeparatedByString:@" "];
 		NSRange range = NSMakeRange(0, MIN(words.count, 5));
 		NSString * filename = [[words subarrayWithRange:range] componentsJoinedByString:@" "];
-		[self.importDelegate importFormWindow:self didEndWithObject:attrString ofType:kItemTypeText proposedFilename:filename];
+		[self.importDelegate importFormWindow:self didEndWithObject:string ofType:FileItemTypeText proposedFilename:filename];
 	}
 	
 	[super okAction:sender];
+}
+
+@end
+
+
+@implementation TaskImportFormWindow
+
+- (void)awakeFromNib
+{
+	[super awakeFromNib];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(nameFieldDidChange:)
+												 name:NSControlTextDidChangeNotification object:self.nameField];
+}
+
+- (void)nameFieldDidChange:(NSNotification *)notification
+{
+	self.okButton.enabled = (self.nameField.stringValue.length > 0);
+}
+
+- (IBAction)okAction:(id)sender
+{
+	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
+		[self.importDelegate importFormWindow:self didEndWithObject:self.nameField.stringValue ofType:FileItemTypeTask proposedFilename:nil];
+	}
+	[super okAction:sender];
+}
+
+- (void)dealloc
+{
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+@end
+
+
+@implementation CountdownImportFormWindow
+
+- (void)awakeFromNib
+{
+	[super awakeFromNib];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(textFieldDidChange:)
+												 name:NSControlTextDidChangeNotification object:nil];
+}
+
+- (IBAction)textFieldDidChange:(NSNotification *)notification
+{
+	if (notification.object == self.valueField)
+		[self valueFieldDidChange:notification];
+	else if (notification.object == self.maximumField)
+		[self maximumFieldDidChange:notification];
+	
+	[self updateUI];
+}
+
+- (void)valueFieldDidChange:(NSNotification *)notification
+{
+	self.valueStepper.integerValue = self.valueField.integerValue;
+}
+
+- (IBAction)valueStepperDidChangeAction:(id)sender
+{
+	self.valueField.integerValue = self.valueStepper.integerValue;
+}
+
+- (void)maximumFieldDidChange:(NSNotification *)notification
+{
+	self.maximumStepper.integerValue = self.maximumField.integerValue;
+	[self updateUI];
+}
+
+- (IBAction)maximumStepperDidChangeAction:(id)sender
+{
+	self.maximumField.integerValue = self.maximumStepper.integerValue;
+	[self updateUI];
+}
+
+- (void)updateUI
+{
+	self.okButton.enabled = (self.nameField.stringValue.length
+							 && self.valueField.stringValue.length
+							 && self.maximumField.stringValue.length);
+}
+
+- (IBAction)okAction:(id)sender
+{
+	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
+		NSDictionary * object = @{ @"name" : self.nameField.stringValue,
+								   @"value" : @(self.valueField.integerValue),
+								   @"maximum" : @(self.maximumField.integerValue) };
+		[self.importDelegate importFormWindow:self didEndWithObject:object ofType:FileItemTypeCountdown proposedFilename:nil];
+	}
+	[super okAction:sender];
+}
+
+- (void)dealloc
+{
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end
