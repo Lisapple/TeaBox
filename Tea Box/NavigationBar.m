@@ -29,14 +29,14 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 	unsigned long count = CGColorGetNumberOfComponents(colorRef);
 	const CGFloat * comps = CGColorGetComponents(colorRef);
 	
-	CGFloat new_comps[count];
-	for (int i = 0; i < (count - 1 /* Skip alpha channel */); i++) {
-		new_comps[i] = comps[i] * (1.f + (-0.333f * intensity)); // A = comps; B = 2/3 * comps; new_comps = A + (B - A) * intensity
-	}
-	new_comps[count - 1] = comps[count - 1]; // Copy alpha channel
+	const CGFloat factor = 0.333f * intensity;
+	CGFloat newComps[count];
+	memcpy(newComps, comps, count);
+	for (int i = 0; i < (count - 1 /* Skip alpha channel */); i++)
+		newComps[i] -= newComps[i] * factor;
 	
 	CGColorSpaceRef colorSpace = CGColorGetColorSpace(colorRef);
-	return CGColorCreate(colorSpace, new_comps);
+	return CGColorCreate(colorSpace, newComps);
 }
 
 + (NSString *)titleForType:(NavigationBarButtonType)aType
@@ -100,7 +100,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 		_textField = [[NSTextField alloc] initWithFrame:frame];
 		[_textField setEditable:NO];
 		[_textField setBordered:NO];
-		_textField.alignment = NSCenterTextAlignment;
+		_textField.alignment = NSTextAlignmentCenter;
 		_textField.stringValue = _title;
 		_textField.drawsBackground = NO;
 		_textField.font = [NSFont boldSystemFontOfSize:12.];
@@ -249,7 +249,6 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 	CGPathRelease(pathRef);
 }
 
-
 - (NSDragOperation)draggingEntered:(NSObject <NSDraggingInfo> *)sender
 {
 	[_navigationBar navigationBarButton:self didBeginDrag:sender];
@@ -280,31 +279,36 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 {
 	_title = title;
 	
+	const CGSize size = CGSizeMake(self.frame.size.width / 2., self.frame.size.height / 2. + 4.);
+	
 	if (!_titleLabel) {
-		CGFloat width = self.frame.size.width / 2.;
-		CGFloat height = self.frame.size.height / 2. + 4.;
-		NSRect frame = NSMakeRect(width / 2., height / 2. - 4., width, height);
+		NSRect frame = NSMakeRect(size.width / 2., size.height / 2. - 4., size.width, size.height);
 		_titleLabel = [[NSTextField alloc] initWithFrame:frame];
 		_titleLabel.autoresizingMask = (NSViewWidthSizable);
 		_titleLabel.editable = NO;
 		_titleLabel.bezeled = NO;
-		_titleLabel.alignment = NSCenterTextAlignment;
+		_titleLabel.alignment = NSTextAlignmentCenter;
 		_titleLabel.font = [NSFont boldSystemFontOfSize:18.];
 		_titleLabel.textColor = [NSColor darkGrayColor];
 		_titleLabel.drawsBackground = NO;
+		if ([_titleLabel respondsToSelector:@selector(setLineBreakMode:)]) { // macOS 10.10+
+			_titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+			_titleLabel.usesSingleLineMode = YES;
+		}
+		if ([_titleLabel respondsToSelector:@selector(setAllowsDefaultTighteningForTruncation:)]) // macOS 10.11+
+			_titleLabel.allowsDefaultTighteningForTruncation = YES;
+		
 		[self addSubview:_titleLabel];
 	}
 	_titleLabel.stringValue = _title;
 	
 	if (!_textField) {
-		CGFloat width = self.frame.size.width / 2.;
-		CGFloat height = self.frame.size.height / 2. + 4.;
-		NSRect frame = NSMakeRect(width / 2., height / 2. - 4., width, height);
+		NSRect frame = NSMakeRect(size.width / 2., size.height / 2. - 4., size.width, size.height);
 		_textField = [[NSTextField alloc] initWithFrame:frame];
 		_textField.autoresizingMask = (NSViewWidthSizable);
 		_textField.editable = YES;
 		_textField.bezeled = YES;
-		_textField.alignment = NSCenterTextAlignment;
+		_textField.alignment = NSTextAlignmentCenter;
 		_textField.font = [NSFont boldSystemFontOfSize:16.];
 		_textField.drawsBackground = YES;
 		_textField.delegate = self;
@@ -313,6 +317,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 	}
 	
 	_textField.stringValue = _title;
+	[self updateLayout];
 }
 
 - (void)setEditable:(BOOL)editable
@@ -443,6 +448,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 		
 		x += rect.size.width + kButtonMargin;
 	}
+	[self updateLayout];
 }
 
 - (void)setRightBarButtons:(NSArray <NavigationBarButton *> *)rightBarButtons
@@ -461,13 +467,28 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 		button.autoresizingMask = (NSViewMinXMargin);
 		[self addSubview:button];
 		
-		x -= (rect.size.width + kButtonMargin);
+		x -= rect.size.width + kButtonMargin;
 	}
+	[self updateLayout];
 }
 
 #undef kButtonMargin
 
-#pragma - DrawRect
+#pragma - Layout
+
+- (void)updateLayout
+{
+	const CGRect rightMostLeftButtonFrame = _leftBarButtons.lastObject.frame;
+	const CGFloat leftTitleMargin = rightMostLeftButtonFrame.origin.x + rightMostLeftButtonFrame.size.width + 8.;
+	
+	const CGRect leftMostRightButtonFrame = _rightBarButtons.lastObject.frame;
+	const CGFloat rightTitleMargin = self.frame.size.width - leftMostRightButtonFrame.origin.x + 8.;
+	
+	const CGFloat y = _titleLabel.frame.origin.y;
+	[_titleLabel sizeToFit];
+	const CGFloat width = self.frame.size.width - MAX(leftTitleMargin, rightTitleMargin) * 2;
+	_titleLabel.frame = CGRectMake(CGRectGetMidX(self.frame) - width / 2, y, width, _titleLabel.frame.size.height);
+}
 
 - (void)drawRect:(NSRect)dirtyRect
 {
