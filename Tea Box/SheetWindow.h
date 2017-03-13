@@ -6,8 +6,6 @@
 //
 //
 
-#import <Foundation/Foundation.h>
-
 @interface SheetWindow : NSWindow
 
 - (IBAction)cancelAction:(id)sender;

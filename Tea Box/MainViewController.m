@@ -26,19 +26,18 @@
 
 @implementation MainViewController
 
-@synthesize navigationBar = _navigationBar;
-@synthesize tableView = _tableView;
-@synthesize bottomLabel = _bottomLabel;
-
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
 	if (!nibNameOrNil) nibNameOrNil = @"MainViewController";
 	if (!nibBundleOrNil) nibBundleOrNil = [NSBundle mainBundle];
-	
-    if ((self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil])) {
-    }
-    
-    return self;
+	if ((self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil])) { }
+	return self;
+}
+
+- (nullable instancetype)initWithCoder:(NSCoder *)coder
+{
+	if ((self = [super initWithCoder:coder])) { }
+	return self;
 }
 
 - (void)loadView
@@ -123,7 +122,7 @@
 	}
 }
 
-- (NSArray *)fetchArrayOfProjects
+- (NSArray <NSArray <Project *> *> *)fetchArrayOfProjects
 {
 	NSMutableArray * array = [NSMutableArray arrayWithCapacity:10];
 	NSMutableArray * mutablePriorities = [NSMutableArray arrayWithCapacity:10];

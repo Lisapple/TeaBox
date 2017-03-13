@@ -6,8 +6,6 @@
 //  Copyright (c) 2013 Lis@cintosh. All rights reserved.
 //
 
-#import <AppKit/AppKit.h>
-
 #import "MainWindow.h"
 
 @interface ApplicationPreferencesWindow : MainWindow

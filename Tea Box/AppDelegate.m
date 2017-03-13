@@ -8,7 +8,8 @@
 
 #import "AppDelegate.h"
 
-#define kServiceName @"_teabox._tcp."
+@import Fabric;
+@import Crashlytics;
 
 @implementation AppDelegate
 

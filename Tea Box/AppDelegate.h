@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
 #import <CommonCrypto/CommonDigest.h>
 
 #include <stdio.h>

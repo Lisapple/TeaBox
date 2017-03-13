@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-
 @protocol NavigationControllerDelegate <NSObject>
 
 @optional
@@ -26,7 +24,7 @@
 + (void)popViewControllerAnimated:(BOOL)animated;
 + (void)pushViewController:(NSViewController *)viewController animated:(BOOL)animated;
 
-+ (NSArray *)delegates;
++ (NSArray <id <NavigationControllerDelegate>> *)delegates;
 + (void)addDelegate:(id <NavigationControllerDelegate>)delegate;
 + (void)removeDelegate:(id <NavigationControllerDelegate>)delegate;
 

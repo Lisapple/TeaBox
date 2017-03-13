@@ -6,8 +6,7 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-#import <Quartz/Quartz.h>// For QuickLook
+@import Quartz; // For QuickLook
 
 #import "Project.h"
 #import "Step.h"

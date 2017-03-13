@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <AppKit/AppKit.h>
 #import "SheetWindow.h"
 #import "Step.h"
 

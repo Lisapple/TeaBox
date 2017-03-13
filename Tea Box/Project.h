@@ -6,9 +6,7 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 
-#include <sqlite3.h>
 
 #import "TBLibrary.h"
 

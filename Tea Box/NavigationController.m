@@ -16,8 +16,8 @@
 @implementation NavigationController
 
 static BOOL isPushingOrPoping = NO;
-static NSMutableArray * _viewControllers = nil;
-static NSMutableArray * _delegates = nil;
+static NSMutableArray <NSViewController *> * _viewControllers = nil;
+static NSMutableArray <id <NavigationControllerDelegate>> * _delegates = nil;
 
 + (void)initialize
 {
@@ -29,9 +29,9 @@ static NSMutableArray * _delegates = nil;
 	}
 }
 
-+ (NSArray *)delegates
++ (NSArray <id <NavigationControllerDelegate>> *)delegates
 {
-	return (NSArray *)_delegates;
+	return _delegates;
 }
 
 + (void)addDelegate:(id <NavigationControllerDelegate>)delegate

@@ -271,12 +271,6 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 
 @implementation NavigationBar
 
-- (instancetype)init
-{
-	if ((self = [super init])) { }
-	return self;
-}
-
 - (BOOL)isFlipped
 {
 	return YES;
@@ -347,21 +341,19 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 - (void)navigationBarButton:(NavigationBarButton *)button didReceiveDrag:(NSObject <NSDraggingInfo> *)sender
 {
 	if ([_delegate respondsToSelector:@selector(navigationBar:didDragItems:onBarButton:)]) {
-		NSArray * items = [sender draggingPasteboard].pasteboardItems;
+		NSArray <NSPasteboardItem *> * items = [sender draggingPasteboard].pasteboardItems;
 		[_delegate navigationBar:self didDragItems:items onBarButton:button];
 	}
 	
 	/* Call the "didEndDrag..." delegate method */
-	if ([_delegate respondsToSelector:@selector(navigationBar:didEndDragOnBarButton:)]) {
+	if ([_delegate respondsToSelector:@selector(navigationBar:didEndDragOnBarButton:)])
 		[_delegate navigationBar:self didEndDragOnBarButton:button];
-	}
 }
 
 - (void)navigationBarButton:(NavigationBarButton *)button didEndDrag:(NSObject <NSDraggingInfo> *)sender;
 {
-	if ([_delegate respondsToSelector:@selector(navigationBar:didEndDragOnBarButton:)]) {
+	if ([_delegate respondsToSelector:@selector(navigationBar:didEndDragOnBarButton:)])
 		[_delegate navigationBar:self didEndDragOnBarButton:button];
-	}
 }
 
 #pragma - NavigationBar Delegate
@@ -405,7 +397,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 		return [_rightBarButton performDragOperation:sender];
 	
 	if ([_delegate respondsToSelector:@selector(navigationBar:didDragItems:onBarButton:)]) {
-		NSArray * items = [sender draggingPasteboard].pasteboardItems;
+		NSArray <NSPasteboardItem *> * items = [sender draggingPasteboard].pasteboardItems;
 		NavigationBarButton * button = ([previousDraggedViewDestination isKindOfClass:[NavigationBarButton class]]) ? (NavigationBarButton *)previousDraggedViewDestination : nil;
 		[_delegate navigationBar:self didDragItems:items onBarButton:button];
 	}
@@ -416,30 +408,25 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 {
 	previousDraggedViewDestination = nil;
 	
-	if ([_delegate respondsToSelector:@selector(navigationBar:didEndDragOnBarButton:)]) {
+	if ([_delegate respondsToSelector:@selector(navigationBar:didEndDragOnBarButton:)])
 		[_delegate navigationBar:self didEndDragOnBarButton:nil];
-	}
 }
 
 #pragma - NavigationBarButton Set
 
 - (void)setLeftBarButton:(NavigationBarButton *)leftBarButton
 {
-	if (leftBarButton) {
-		self.leftBarButtons = @[ leftBarButton ];
-	}
+	if (leftBarButton) self.leftBarButtons = @[ leftBarButton ];
 }
 
 - (void)setRightBarButton:(NavigationBarButton *)rightBarButton
 {
-	if (rightBarButton) {
-		self.rightBarButtons = @[ rightBarButton ];
-	}
+	if (rightBarButton) self.rightBarButtons = @[ rightBarButton ];
 }
 
 #define kButtonMargin 10.
 
-- (void)setLeftBarButtons:(NSArray *)leftBarButtons
+- (void)setLeftBarButtons:(NSArray <NavigationBarButton *> *)leftBarButtons
 {
 	[_leftBarButtons valueForKey:@"removeFromSuperview"];
 	_leftBarButtons = leftBarButtons;
@@ -458,7 +445,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 	}
 }
 
-- (void)setRightBarButtons:(NSArray *)rightBarButtons
+- (void)setRightBarButtons:(NSArray <NavigationBarButton *> *)rightBarButtons
 {
 	[_rightBarButtons valueForKey:@"removeFromSuperview"];
 	_rightBarButtons = rightBarButtons;
@@ -484,7 +471,7 @@ CGColorRef CGColorDarker(CGColorRef colorRef, float intensity)
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-	/* Draw the background image */
+	// Draw the background image
 	if (!backgroundImage) {
 		NSImage * image = [NSImage imageNamed:@"navigation-bar-background"];
 		backgroundImage = [image CGImageForProposedRect:NULL

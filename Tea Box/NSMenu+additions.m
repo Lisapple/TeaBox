@@ -10,19 +10,21 @@
 
 @implementation NSMenu (additions)
 
-- (void)addItemWithTitle:(NSString *)title target:(id)target action:(SEL)action
+- (NSMenuItem *)addItemWithTitle:(NSString *)title target:(id)target action:(SEL)action
 {
 	NSMenuItem * menuItem = [[NSMenuItem alloc] initWithTitle:title action:action keyEquivalent:@""];
 	menuItem.target = target;
 	[self addItem:menuItem];
+	return menuItem;
 }
 
-- (void)addItemWithTitle:(NSString *)title target:(id)target action:(SEL)action tag:(NSInteger)tag
+- (NSMenuItem *)addItemWithTitle:(NSString *)title target:(id)target action:(SEL)action tag:(NSInteger)tag
 {
 	NSMenuItem * menuItem = [[NSMenuItem alloc] initWithTitle:title action:action keyEquivalent:@""];
 	menuItem.target = target;
 	menuItem.tag = tag;
 	[self addItem:menuItem];
+	return menuItem;
 }
 
 @end

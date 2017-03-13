@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-
 @class NavigationBar, NavigationBarButton;
 @protocol NavigationBar <NSObject>
 
@@ -23,7 +21,7 @@
 // @TODO: add the shouldXXX method
 //- (void)navigationBar:(NavigationBar *)navigationBar shouldDragItems:(NSArray *)items onBarButton:(NavigationBarButton *)button;
 - (void)navigationBar:(NavigationBar *)navigationBar didBeginDragOnBarButton:(NavigationBarButton *)button;
-- (void)navigationBar:(NavigationBar *)navigationBar didDragItems:(NSArray *)items onBarButton:(NavigationBarButton *)button;
+- (void)navigationBar:(NavigationBar *)navigationBar didDragItems:(NSArray <NSPasteboardItem *> *)items onBarButton:(NavigationBarButton *)button;
 - (void)navigationBar:(NavigationBar *)navigationBar didEndDragOnBarButton:(NavigationBarButton *)button;
 
 @end
@@ -59,7 +57,7 @@ typedef NS_ENUM(NSUInteger, NavigationBarButtonType) {
 @property (nonatomic, readonly) NSTextField * titleLabel, * textField;
 @property (nonatomic, assign) BOOL editable;
 @property (nonatomic, strong) NavigationBarButton * leftBarButton, * rightBarButton;
-@property (nonatomic, strong) NSArray * leftBarButtons, * rightBarButtons; // Array of NavigationBarButton objects
+@property (nonatomic, strong) NSArray <NavigationBarButton *> * leftBarButtons, * rightBarButtons; // Array of NavigationBarButton objects
 @property (nonatomic, strong) NSObject <NavigationBarDelegate> * delegate;
 
 @end

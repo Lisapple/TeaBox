@@ -55,6 +55,7 @@
 }
 
 #pragma mark - Deprecated Methods
+
 - (void)copyItemAtPath:(NSString *)srcPath toPath:(NSString *)dstPath progressionBlock:(void (^)(float progression))progressionBlock errorBlock:(void (^)(NSError * error))errorBlock
 {
 	[self copyItemAtPath:srcPath toPath:dstPath progressionHandler:progressionBlock errorHandler:errorBlock];

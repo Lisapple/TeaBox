@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-
 @interface NSDate (additions)
 
 + (NSDate *)dateFromSQLiteDate:(NSString *)dateString;

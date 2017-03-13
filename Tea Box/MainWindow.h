@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <AppKit/AppKit.h>
-
 @interface MainContentView : NSView
 {
 	NSView * subcontentView;

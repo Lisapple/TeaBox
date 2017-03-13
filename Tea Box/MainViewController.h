@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-
 #import "AppDelegate.h"
 
 #import "Project.h"
@@ -23,23 +21,20 @@
 
 @interface MainViewController : NSViewController <TableViewDelegate, TableViewDataSource, NavigationControllerDelegate, NSTextFieldDelegate>
 {
-	NSArray * sharedHostNames;
-	NSArray * arrayOfSharedProjects;
+	NSArray <NSString *> * sharedHostNames;
+	NSArray <NSArray <NSDictionary *> *> * arrayOfSharedProjects;
 	
-	NSArray * arrayOfProjects;
+	NSArray <NSArray <Project *> *> * arrayOfProjects;
 	
 	NSUInteger numberOfRows;
-	NSArray * priorities;
-	NSArray * priorityNames;
+	NSArray <NSNumber/*ProjectPriory*/ *> * priorities;
 }
 
 @property (unsafe_unretained) IBOutlet TableView * tableView;
 
 - (void)reloadData;
 
-- (NSArray *)allProjects;
-- (NSArray *)fetchArrayOfProjects;
-
-- (IBAction)newProjectAction:(id)sender;
+- (NSArray <Project *> *)allProjects UNAVAILABLE_ATTRIBUTE;
+- (NSArray <NSArray <Project *> *> *)fetchArrayOfProjects;
 
 @end

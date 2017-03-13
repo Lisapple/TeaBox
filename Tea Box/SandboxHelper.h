@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
 #import "Item.h"
 
 @interface SandboxHelper : NSObject

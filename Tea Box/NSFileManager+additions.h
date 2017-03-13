@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-
 @interface NSFileManager (additions)
 
 /*** DEPRECATED ***

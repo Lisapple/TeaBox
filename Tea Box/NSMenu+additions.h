@@ -6,11 +6,13 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#import <AppKit/AppKit.h>
+NS_ASSUME_NONNULL_BEGIN
 
 @interface NSMenu (additions)
 
-- (void)addItemWithTitle:(NSString *)title target:(id)target action:(SEL)action;
-- (void)addItemWithTitle:(NSString *)title target:(id)target action:(SEL)action tag:(NSInteger)tag;
+- (NSMenuItem *)addItemWithTitle:(NSString *)title target:(nullable id)target action:(nullable SEL)action;
+- (NSMenuItem *)addItemWithTitle:(NSString *)title target:(nullable id)target action:(nullable SEL)action tag:(NSInteger)tag;
 
 @end
+
+NS_ASSUME_NONNULL_END

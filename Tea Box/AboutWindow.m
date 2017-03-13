@@ -17,7 +17,7 @@
 	NSString * version = [NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"];
 	NSDateFormatter * formatter = [[NSDateFormatter alloc] init];
 	formatter.dateFormat = @"yyyy";
-	_aboutLabel.stringValue = [NSString stringWithFormat:@"Version %@\nLis@cintosh, %@", version, [formatter stringFromDate:[NSDate date]]];
+	_aboutLabel.stringValue = [NSString stringWithFormat:@"Version %@" @"\n" @"Lis@cintosh, %@", version, [formatter stringFromDate:[NSDate date]]];
 }
 
 @end

@@ -6,6 +6,8 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
+@import Quartz; // For QuickLook
+
 #import "Item.h"
 
 @interface Item (additions)

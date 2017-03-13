@@ -11,7 +11,7 @@
 
 @implementation SandboxHelper
 
-static NSMutableArray * _startedScopedResources = nil;
+static NSMutableArray <NSURL *> * _startedScopedResources = nil;
 
 + (BOOL)sandboxActivated
 {
@@ -66,7 +66,7 @@ static NSMutableArray * _startedScopedResources = nil;
 	[self.class executeWithSecurityScopedAccessToPath:fileURL.path block:block];
 }
 
-+ (void)executeWithSecurityScopedAccessToPath:(NSString *)path block:(void (^)(NSError *))block
++ (void)executeWithSecurityScopedAccessToPath:(NSString *)path block:(void (^)(NSError * _Nullable))block
 {
 	if ([self.class sandboxSupported]) {
 		if (path) {
@@ -114,7 +114,7 @@ static NSMutableArray * _startedScopedResources = nil;
 	}
 }
 
-+ (void)executeWithSecurityScopedAccessToItem:(Item *)item block:(void (^)(NSError *))block
++ (void)executeWithSecurityScopedAccessToProject:(nonnull Project *)project block:(void (^)(NSError * _Nullable))block
 {
 	if ([self.class sandboxSupported]) {
 		if (item) {
@@ -158,11 +158,11 @@ static NSMutableArray * _startedScopedResources = nil;
 	}
 }
 
-+ (NSString *)bookmarkPathWithPath:(NSString *)originalPath
++ (NSString *)bookmarkPathWithPath:(nonnull NSString *)path
 {
 #if _SANDBOX_SUPPORTED_
 	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-	NSData * bookmarkData = [userDefaults objectForKey:originalPath];
+	NSData * bookmarkData = [userDefaults objectForKey:path];
 	NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
 												options:NSURLBookmarkResolutionWithSecurityScope
 										  relativeToURL:nil
@@ -173,10 +173,10 @@ static NSMutableArray * _startedScopedResources = nil;
 	return nil;
 }
 
-+ (void)saveBookmarkDataWithPath:(NSString *)originalPath key:(NSString *)key
++ (void)saveBookmarkDataWithPath:(nonnull NSString *)path toKey:(nonnull NSString *)key
 {
 #if _SANDBOX_SUPPORTED_
-	NSURL * fileURL = [NSURL fileURLWithPath:originalPath];
+	NSURL * fileURL = [NSURL fileURLWithPath:path];
 	
 	NSError * error = nil;
 	NSData * bookmarkData = [fileURL bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope

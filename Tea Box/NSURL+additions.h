@@ -6,8 +6,6 @@
 //
 //
 
-#import <Foundation/Foundation.h>
-
 @interface NSURL (additions)
 
 - (BOOL)fileIsBundle:(BOOL *)isBundle isPackage:(BOOL *)isPackage;
