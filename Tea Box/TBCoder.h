@@ -21,7 +21,7 @@ extern NSString * const ProjectIndexFilename;
 
 @protocol TBDecoding <NSObject>
 
-- (instancetype)initWithRepresentation:(NSString *)representation;
+- (nullable instancetype)initWithRepresentation:(NSString *)representation;
 
 @end
 

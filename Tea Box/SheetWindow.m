@@ -12,13 +12,13 @@
 
 - (IBAction)cancelAction:(id)sender
 {
-	[self.parentWindow endSheet:self returnCode:NSModalResponseCancel];
+	[self.sheetParent endSheet:self returnCode:NSModalResponseCancel];
 	[self orderOut:nil];
 }
 
 - (IBAction)okAction:(id)sender
 {
-	[self.parentWindow endSheet:self returnCode:NSModalResponseOK];
+	[self.sheetParent endSheet:self returnCode:NSModalResponseOK];
 	[self orderOut:nil];
 }
 

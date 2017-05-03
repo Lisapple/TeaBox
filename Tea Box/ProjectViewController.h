@@ -23,6 +23,15 @@
 
 #import "NSPasteboardItem+additions.h"
 
+typedef NS_ENUM(NSInteger, InsertOperation) {
+	// Show alert to ask user which operation to use
+	InsertOperationAsk = -1,
+	
+	InsertOperationCopy,
+	InsertOperationMove,
+	InsertOperationLink
+};
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface ProjectViewController : NSViewController <TableViewDelegate, TableViewDataSource, NSTextFieldDelegate, IndexWebViewDelegate, NavigationBarDelegate, ImportFormWindowDelegate, QLPreviewPanelDelegate, QLPreviewPanelDataSource, WebFrameLoadDelegate>
@@ -39,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 	CGFloat indexWebViewHeight;
 }
 
-@property (strong, nonnull) Project * project;
+@property (nonatomic, strong, nonnull) Project * project;
 @property (strong, nonnull) TBLibrary * library;
 
 - (void)reloadData;

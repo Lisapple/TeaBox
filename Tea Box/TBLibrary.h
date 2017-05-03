@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Lis@cintosh. All rights reserved.
 //
 
-#define kDefaultLibraryKey @"defaultLibrary"
 #define kLibraryBookmarkDataKey @"LibraryBookmarkData"
 
 #import "Project.h"
@@ -16,12 +15,12 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class Project;
-@class Step;
 @protocol TBCoding;
 @protocol TBDecoding;
 @interface TBLibrary : NSObject <TBCoding, TBDecoding>
 
 @property (readonly, strong) NSString * path;
+@property (readonly, readonly) NSURL * baseURL;
 @property (readonly, strong) NSString * name;
 @property (readonly) NSArray <Project *> * projects;
 
@@ -43,9 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// The returned URL contains the relative path from Library and the base URL to the library location on disk.
 - (NSURL *)URLForProject:(Project *)project;
 
-- (NSString *)pathForProjectFolder:(Project *)project DEPRECATED_ATTRIBUTE;
-- (NSString *)pathForStepFolder:(Step *)step;
-- (nullable NSString *)pathForItem:(Item *)item;
+- (BOOL)moveProjectToTrash:(Project *)project;
 
 - (BOOL)reloadFromDisk;
 - (BOOL)save;
@@ -54,6 +51,37 @@ NS_ASSUME_NONNULL_BEGIN
 
 NS_ASSUME_NONNULL_END
 
+
+NS_ASSUME_NONNULL_BEGIN
+
+@class Step;
+@class FileItem;
+@interface TBLibrary ()
+
+- (nullable NSURL *)URLForStep:(Step *)step;
+- (BOOL)moveStepToTrash:(Step *)step;
+
+- (nullable NSURL *)URLForFileItem:(FileItem *)item;
+- (BOOL)moveFileItemToTrash:(FileItem *)item;
+- (BOOL)moveFileItemToTrash:(FileItem *)item exists:(nullable BOOL *)exists;
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+
+NS_ASSUME_NONNULL_BEGIN
+
+#pragma mark - DEPRECATED
+@interface TBLibrary ()
+
+- (NSString *)pathForProjectFolder:(Project *)project DEPRECATED_MSG_ATTRIBUTE("Use -URLForProject: instead");
+- (NSString *)pathForStepFolder:(Step *)step DEPRECATED_MSG_ATTRIBUTE("Use -URLForStep: instead");
+- (nullable NSString *)pathForItem:(Item *)item UNAVAILABLE_ATTRIBUTE;
+
+@end
+
+NS_ASSUME_NONNULL_END
 
 
 NS_ASSUME_NONNULL_BEGIN
@@ -78,7 +106,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)revertToBackup UNAVAILABLE_ATTRIBUTE;
 - (BOOL)deleteBackup UNAVAILABLE_ATTRIBUTE;
 
-- (NSURL *)URLForItem:(Item *)item DEPRECATED_ATTRIBUTE;
+- (NSURL *)URLForItem:(Item *)item UNAVAILABLE_ATTRIBUTE;
 
 @end
 NS_ASSUME_NONNULL_END

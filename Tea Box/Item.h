@@ -26,10 +26,6 @@ typedef NS_ENUM(NSUInteger, FileItemType) {
 	FileItemTypeFolder
 };
 
-extern const NSUInteger FileItemTypeTask DEPRECATED_ATTRIBUTE;
-extern const NSUInteger FileItemTypeCountdown DEPRECATED_ATTRIBUTE;
-
-
 extern NSImage * _Nullable ImageForFileItemType(FileItemType type);
 extern NSImage * _Nullable SelectedImageForFileItemType(FileItemType type);
 
@@ -38,7 +34,11 @@ extern FileItemType FileItemTypeFromString(NSString * _Nonnull typeString) MIGRA
 @interface FileItem : Item
 
 @property (readonly) FileItemType itemType; // @FIXME: Should be `type` (once current `type` removed)
-@property (readonly) NSURL * URL;
+
+/// For files into library, `URL.path` is only the filename and `URL.baseURL` the URL of the library  (use `-[TBLibrary URLForFileItem:]` to get complete URL)
+/// For linked files, it's a complete URL that could not point to existing file, use `-[NSUserDefault dataForKey:self.URL.absoluteString]` to retreive bookmark data. 
+@property (copy) NSURL * URL; // @TODO: Set a read-only but add `rename:` method to only change the last path component of the URL
+@property (copy) NSString * name;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithType:(FileItemType)type fileURL:(NSURL *)URL NS_DESIGNATED_INITIALIZER;
@@ -51,7 +51,7 @@ extern FileItemType FileItemTypeFromString(NSString * _Nonnull typeString) MIGRA
 
 @interface TextItem : Item
 
-@property (strong) NSString * content;
+@property (copy) NSString * content;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithContent:(NSString *)content;
@@ -59,16 +59,35 @@ extern FileItemType FileItemTypeFromString(NSString * _Nonnull typeString) MIGRA
 @end
 
 
+@interface WebURLItem : Item
+
+@property (copy) NSURL * URL;
+
+- (instancetype)init UNAVAILABLE_ATTRIBUTE;
+- (instancetype)initWithURL:(NSURL *)url;
+
+@end
+
+
+typedef NS_ENUM(NSUInteger, TaskState) {
+	TaskStateNone,
+	TaskStateActive,
+	TaskStateCompleted,
+	
+	kTaskStateCount
+};
+
 @interface TaskItem : Item
 
 @property (strong, readonly) NSString * name;
-@property (assign, readonly, getter=isCompleted) BOOL completed;
+@property (assign) TaskState state;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithName:(NSString *)name;
 
-- (void)markAsActive;
-- (void)markAsCompleted;
+/// Change state to next following this order: None, Active, Completed, None, etc.
+/// Returns the next state
+- (TaskState)toggleState;
 
 @end
 
@@ -128,7 +147,7 @@ extern NSString * const kItemTypeUnkown DEPRECATED_ATTRIBUTE;
 - (BOOL)insertIntoLibrary:(TBLibrary *)library UNAVAILABLE_ATTRIBUTE;
 
 - (void)updateValue:(id)value forKey:(NSString *)key UNAVAILABLE_ATTRIBUTE;
-- (BOOL)moveToStep:(Step *)destinationStep DEPRECATED_ATTRIBUTE;
+- (BOOL)moveToStep:(Step *)destinationStep UNAVAILABLE_ATTRIBUTE;
 - (BOOL)delete UNAVAILABLE_ATTRIBUTE;
 
 @end

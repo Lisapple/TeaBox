@@ -25,4 +25,13 @@
 	return alert;
 }
 
+- (NSArray <NSButton *> *)addButtonsWithTitles:(NSArray <NSString *> *)titles
+{
+	NSMutableArray * buttons = [NSMutableArray arrayWithCapacity:titles.count];
+	for (NSString * title in titles) {
+		[buttons addObject:[self addButtonWithTitle:title]];
+	}
+	return buttons;
+}
+
 @end

@@ -11,9 +11,6 @@
 
 @implementation ImportFormWindow
 
-@synthesize importDelegate = _importDelegate;
-@synthesize objectValue;
-
 - (IBAction)cancelAction:(id)sender
 {
 	if ([self.importDelegate respondsToSelector:@selector(importFormWindowDidCancel:)]) {
@@ -26,8 +23,6 @@
 
 
 @implementation _ImportFormImageView
-
-@synthesize delegate;
 
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
@@ -109,6 +104,14 @@
 
 @implementation ImageImportFormWindow
 
+- (void)awakeFromNib
+{
+	[super awakeFromNib];
+	
+	_imageView.image = nil;
+	[_progressIndicator stopAnimation:nil];
+}
+
 - (BOOL)makeFirstResponder:(nullable NSResponder *)aResponder
 {
 	_imageView.delegate = self;
@@ -120,7 +123,7 @@
 	_descriptionLabel.stringValue = @"";
 	
 	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)])
-		[self.importDelegate importFormWindow:self didEndWithObject:_imageView.image ofType:FileItemTypeImage proposedFilename:_imageURL.lastPathComponent];
+		[self.importDelegate importFormWindow:self didEndWithObject:_imageView.image ofType:ImportTypeImage proposedFilename:_imageURL.lastPathComponent];
 	
 	[super okAction:sender];
 }
@@ -152,16 +155,17 @@
 	NSURLSession * session = [NSURLSession sessionWithConfiguration:configuration];
 	NSURLRequest * request = [[NSURLRequest alloc] initWithURL:imageURL];
 	[[session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-		
-		_imageView.image = [[NSImage alloc] initWithData:data];
-		if (_imageView.image)
-			_descriptionLabel.stringValue = @"";
-		else if (error)
-			_descriptionLabel.stringValue = error.localizedDescription;
-		else
-			_descriptionLabel.stringValue = @"The image can be downloaded.";
-		
-		[_progressIndicator stopAnimation:nil];
+		dispatch_async(dispatch_get_main_queue(), ^{
+			_imageView.image = [[NSImage alloc] initWithData:data];
+			if (_imageView.image)
+				_descriptionLabel.stringValue = @"";
+			else if (error)
+				_descriptionLabel.stringValue = error.localizedDescription;
+			else
+				_descriptionLabel.stringValue = @"The image can be downloaded.";
+			
+			[_progressIndicator stopAnimation:nil];
+		});
 	}] resume];
 }
 
@@ -170,15 +174,19 @@
 
 @implementation URLImportFormWindow
 
-@synthesize inputTextField = _inputTextField;
-@synthesize descriptionLabel = _descriptionLabel;
-
 - (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
-    if ((self = [super initWithCoder:aDecoder])) {
+	if ((self = [super initWithCoder:aDecoder])) {
 		_inputTextField.delegate = self;
-    }
-    return self;
+	}
+	return self;
+}
+
+- (void)setEditingItem:(WebURLItem *)editingItem
+{
+	_editingItem = editingItem;
+	if (editingItem)
+		_inputTextField.stringValue = editingItem.URL.absoluteString;
 }
 
 - (NSURL *)URLFromString:(NSString *)string
@@ -206,10 +214,9 @@
 - (IBAction)okAction:(id)sender
 {
 	NSURL * webURL = [self URLFromString:_inputTextField.stringValue];
-	
 	if (webURL) {
 		if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)])
-			[self.importDelegate importFormWindow:self didEndWithObject:webURL ofType:FileItemTypeWebURL proposedFilename:webURL.lastPathComponent];
+			[self.importDelegate importFormWindow:self didEndWithObject:webURL ofType:ImportTypeWebURL proposedFilename:webURL.lastPathComponent];
 		
 		[super okAction:sender];
 	} else
@@ -224,7 +231,8 @@
 - (void)setEditingItem:(TextItem *)editingItem
 {
 	_editingItem = editingItem;
-	_inputTextView.string = editingItem.content;
+	if (editingItem)
+		_inputTextView.string = editingItem.content;
 }
 
 - (IBAction)okAction:(id)sender
@@ -235,7 +243,7 @@
 		NSArray <NSString *> * words = [string componentsSeparatedByString:@" "];
 		NSRange range = NSMakeRange(0, MIN(words.count, 5));
 		NSString * filename = [[words subarrayWithRange:range] componentsJoinedByString:@" "];
-		[self.importDelegate importFormWindow:self didEndWithObject:string ofType:FileItemTypeText proposedFilename:filename];
+		[self.importDelegate importFormWindow:self didEndWithObject:string ofType:ImportTypeText proposedFilename:filename];
 	}
 	
 	[super okAction:sender];
@@ -261,7 +269,7 @@
 - (IBAction)okAction:(id)sender
 {
 	if ([self.importDelegate respondsToSelector:@selector(importFormWindow:didEndWithObject:ofType:proposedFilename:)]) {
-		[self.importDelegate importFormWindow:self didEndWithObject:self.nameField.stringValue ofType:FileItemTypeTask proposedFilename:nil];
+		[self.importDelegate importFormWindow:self didEndWithObject:self.nameField.stringValue ofType:ImportTypeTask proposedFilename:nil];
 	}
 	[super okAction:sender];
 }
@@ -328,7 +336,7 @@
 		NSDictionary * object = @{ @"name" : self.nameField.stringValue,
 								   @"value" : @(self.valueField.integerValue),
 								   @"maximum" : @(self.maximumField.integerValue) };
-		[self.importDelegate importFormWindow:self didEndWithObject:object ofType:FileItemTypeCountdown proposedFilename:nil];
+		[self.importDelegate importFormWindow:self didEndWithObject:object ofType:ImportTypeCountdown proposedFilename:nil];
 	}
 	[super okAction:sender];
 }

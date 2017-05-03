@@ -44,23 +44,18 @@ static NSMutableArray <NSURL *> * _startedScopedResources = nil;
 
 + (void)executeWithSecurityScopedAccessToURL:(NSURL *)fileURL block:(void (^)(NSError *))block
 {
-	[self.class executeWithSecurityScopedAccessToPath:fileURL.path block:block];
-}
-
-+ (void)executeWithSecurityScopedAccessToPath:(NSString *)path block:(void (^)(NSError * _Nullable))block
-{
 	if (![self.class sandboxSupported]) { if (block) block(nil); return ; } // No error returned, Sandbox not activated
 	
 	NSData * bookmarkData = nil;
 	NSString * libraryPath = [TBLibrary defaultLibrary].path;
-	if (path.length >= libraryPath.length &&
-		[[path substringToIndex:libraryPath.length] isEqualToString:libraryPath]) { // The file is into the library, use library bookmark data
+	if (fileURL.path.length >= libraryPath.length &&
+		[[fileURL.path substringToIndex:libraryPath.length] isEqualToString:libraryPath]) { // The file is into the library, use library bookmark data
 		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
 		bookmarkData = [userDefaults dataForKey:kLibraryBookmarkDataKey];
 		
 	} else { // The file is not into the library, look for saved bookmark data
 		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-		bookmarkData = [userDefaults objectForKey:path];
+		bookmarkData = [userDefaults objectForKey:fileURL.absoluteString];
 	}
 	
 	if (bookmarkData) {
@@ -71,46 +66,16 @@ static NSMutableArray <NSURL *> * _startedScopedResources = nil;
 										  userInfo:@{ NSLocalizedDescriptionKey : @"No bookmark data found" }];
 		block(error);
 	}
+}
+
++ (void)executeWithSecurityScopedAccessToPath:(NSString *)path block:(void (^)(NSError * _Nullable))block
+{
+	[self executeWithSecurityScopedAccessToURL:[NSURL fileURLWithPath:path] block:block];
 }
 
 + (void)executeWithSecurityScopedAccessToProject:(nonnull Project *)project block:(void (^)(NSError * _Nullable))block
 {
-	if (![self.class sandboxSupported]) { if (block) block(nil); return ; } // No error returned, Sandbox not activated
-	
-	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-	NSString * key = [NSString stringWithFormat:@"%li", (long)project.identifier];
-	NSData * bookmarkData = [userDefaults objectForKey:key];
-	if (!bookmarkData) {
-		// The file is into the library, use library bookmark data
-		bookmarkData = [userDefaults dataForKey:kLibraryBookmarkDataKey];
-	}
-	if (bookmarkData) {
-		[self.class executeWithSecurityScopedAccessFromBookmarkData:bookmarkData block:^(NSURL * fileURL, NSError * error) { block(error); }];
-		
-	} else if (block) {
-		NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
-										  userInfo:@{ NSLocalizedDescriptionKey : @"No bookmark data found" }];
-		block(error);
-	}
-}
-
-+ (void)executeWithSecurityScopedAccessToItem:(nonnull FileItem *)item block:(void (^)(NSError * _Nullable))block
-{
-	if (![self.class sandboxSupported]) { if (block) block(nil); return ; } // No error returned, Sandbox not activated
-	
-	NSString * const key = item.URL.absoluteString;
-	NSUserDefaults * const userDefaults = [NSUserDefaults standardUserDefaults];
-	NSData * bookmarkData = [userDefaults objectForKey:key];
-	if (!bookmarkData) // The file is into the library, use library bookmark data
-		bookmarkData = [userDefaults dataForKey:kLibraryBookmarkDataKey];
-	
-	if (bookmarkData)
-		[self.class executeWithSecurityScopedAccessFromBookmarkData:bookmarkData block:^(NSURL * fileURL, NSError * error) { block(error); }];
-	else if (block) {
-		NSError * error = [NSError errorWithDomain:@"TBSandboxHelperDomain" code:-1
-										  userInfo:@{ NSLocalizedDescriptionKey : @"No bookmark data found" }];
-		block(error);
-	}
+	[self.class executeBlockWithSecurityScopedLibraryAccessing:block];
 }
 
 + (void)executeWithSecurityScopedAccessFromBookmarkData:(nonnull NSData *)bookmarkData block:(void (^)(NSURL * _Nullable, NSError * _Nullable))block
@@ -137,7 +102,7 @@ static NSMutableArray <NSURL *> * _startedScopedResources = nil;
 {
 #if _SANDBOX_SUPPORTED_
 	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-	NSData * bookmarkData = [userDefaults objectForKey:path];
+	NSData * bookmarkData = [userDefaults objectForKey:[NSURL fileURLWithPath:path].absoluteString];
 	NSURL * fileURL = [NSURL URLByResolvingBookmarkData:bookmarkData
 												options:NSURLBookmarkResolutionWithSecurityScope
 										  relativeToURL:nil

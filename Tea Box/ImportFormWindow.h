@@ -11,20 +11,25 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSUInteger, ImportType) {
+	ImportTypeImage,
+	ImportTypeText,
+	ImportTypeWebURL,
+	ImportTypeTask,
+	ImportTypeCountdown
+};
+
 @class ImportFormWindow;
 @protocol ImportFormWindowDelegate <NSObject>
 
 @optional
-- (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object ofType:(FileItemType)itemType proposedFilename:(nullable NSString *)filename;
+/// FileItemType: Image, Text, WebURL, Countdown or Task
+- (void)importFormWindow:(ImportFormWindow *)window didEndWithObject:(id)object ofType:(ImportType)type proposedFilename:(nullable NSString *)filename;
 - (void)importFormWindowDidCancel:(ImportFormWindow *)window;
 
 @end
 
 @interface ImportFormWindow : SheetWindow
-{
-	@protected
-	id __unsafe_unretained objectValue;
-}
 
 @property (strong) id <ImportFormWindowDelegate> importDelegate;
 
@@ -65,6 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (unsafe_unretained) IBOutlet NSTextField * inputTextField;
 @property (unsafe_unretained) IBOutlet NSTextField * descriptionLabel;
+@property (nonatomic, nullable, strong) WebURLItem * editingItem;
 
 - (NSURL *)URLFromString:(NSString *)string;
 
@@ -74,7 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface TextImportFormWindow : ImportFormWindow
 
 @property (unsafe_unretained) IBOutlet NSTextView * inputTextView;
-@property (nullable, strong) TextItem * editingItem;
+@property (nonatomic, nullable, strong) TextItem * editingItem;
 
 @end
 

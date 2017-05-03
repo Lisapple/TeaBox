@@ -27,7 +27,7 @@ void DebugErrorLog(int err) {
 		NSLog(@"Error %d: %@", err, description);
 }
 
-NSString * const kDefaultLibraryKey_ = @"com.lisacintosh.teabox.default-library";
+NSString * const kDefaultLibraryKey = @"com.lisacintosh.teabox.default-library";
 
 @interface Project ()
 
@@ -63,7 +63,7 @@ static NSMutableDictionary * _libraries = nil; // Note: Actually, only one libra
 			NSString * path = fileURL.path;
 			if (path && [[NSFileManager defaultManager] fileExistsAtPath:path]) { // Don't create library, just load it if existing
 				TBLibrary * defaultLibrary = [[TBLibrary alloc] initWithPath:path];
-				if (defaultLibrary) _libraries[kDefaultLibraryKey_] = defaultLibrary;
+				if (defaultLibrary) _libraries[kDefaultLibraryKey] = defaultLibrary;
 			}
 		}];
 	});
@@ -71,7 +71,7 @@ static NSMutableDictionary * _libraries = nil; // Note: Actually, only one libra
 
 + (TBLibrary *)defaultLibrary
 {
-	return _libraries[kDefaultLibraryKey_];
+	return _libraries[kDefaultLibraryKey];
 }
 
 + (TBLibrary *)libraryWithName:(NSString *)name
@@ -139,6 +139,11 @@ static NSMutableDictionary * _libraries = nil; // Note: Actually, only one libra
 		}
 	}
 	return self;
+}
+
+- (NSURL *)baseURL
+{
+	return [NSURL fileURLWithPath:self.path];
 }
 
 - (void)setName:(NSString *)name
@@ -210,21 +215,13 @@ static NSMutableDictionary * _libraries = nil; // Note: Actually, only one libra
 		
 		_databasePath = [newPath stringByAppendingFormat:@"/database"];
 		
-		NSURLBookmarkCreationOptions bookmarkOptions = 0;
-#if _SANDBOX_SUPPORTED_
-		bookmarkOptions = NSURLBookmarkCreationWithSecurityScope;
-#endif
 		NSURL * fileURL = [NSURL fileURLWithPath:_path];
-		NSData * bookmarkData = [fileURL bookmarkDataWithOptions:bookmarkOptions
-								  includingResourceValuesForKeys:nil
-												   relativeToURL:nil // Use nil for app-scoped bookmark
+		NSData * bookmarkData = [fileURL bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
+								  includingResourceValuesForKeys:nil relativeToURL:nil // Use nil for app-scoped bookmark
 														   error:pError];
 		
 		NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-		if (bookmarkData)
-			[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
-		else
-			[userDefaults removeObjectForKey:kLibraryBookmarkDataKey];
+		[userDefaults setObject:bookmarkData forKey:kLibraryBookmarkDataKey];
 		
 		if (database) {
 			sqlite3_close_v2(database); // Close (force even when busy) and release the database
@@ -244,117 +241,22 @@ static NSMutableDictionary * _libraries = nil; // Note: Actually, only one libra
 - (NSURL *)URLForProject:(Project *)project
 {
 	NSString * relativePath = [@"Projects/" stringByAppendingFormat:@"%@", project.name];
-	if (project.identifier != 0)
+	if (project.identifier != 0) // Migration support only
 		relativePath = [@"Projects/" stringByAppendingFormat:@"%li - %@", (long)project.identifier, project.name];
 	
 	return [NSURL fileURLWithPath:relativePath
 					relativeToURL:[NSURL fileURLWithPath:self.path]];
 }
 
-/* The returned path looks like "{Path to library}/{Library name}.teaboxdb/Projects/{Project id} - {Project name}" */
-- (NSString *)pathForProjectFolder:(Project *)project
+- (BOOL)moveProjectToTrash:(Project *)project
 {
-	NSString * parentFolderPath = [NSString stringWithFormat:@"%@/Projects", self.path];
-	__block NSString * folderName = [NSString stringWithFormat:@"%li - %@", (long)project.identifier, project.name];
-	NSString * path = [NSString stringWithFormat:@"%@/%@", parentFolderPath, folderName];
-	
-	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
-		if (!error) {
-			NSFileManager * manager = [[NSFileManager alloc] init];
-			if (![manager fileExistsAtPath:path]) {
-				folderName = nil;
-				NSDirectoryEnumerationOptions options = (NSDirectoryEnumerationSkipsHiddenFiles |
-														 NSDirectoryEnumerationSkipsPackageDescendants |
-														 NSDirectoryEnumerationSkipsSubdirectoryDescendants);
-				NSDirectoryEnumerator * enumerator = [manager enumeratorAtURL:[NSURL fileURLWithPath:parentFolderPath]
-												   includingPropertiesForKeys:nil options:options errorHandler:NULL];
-				BOOL folderExists = NO;
-				int length = (int)ceil(log10(project.identifier));
-				for (NSURL * fileURL in enumerator) {
-					NSString * filename = fileURL.path.lastPathComponent;
-					if (filename.length > (length + 1)) {
-						int folderID = 0;
-						if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == project.identifier) {
-							/* Rename the folder with the new name */
-							[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
-							folderExists = YES;
-							break;
-						}
-					}
-				}
-				
-				if (!folderExists) {
-					[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
-				}
-			}
-		}
+	__block BOOL success = NO;
+	NSURL * const fileURL = [self URLForProject:project];
+	[SandboxHelper executeWithSecurityScopedAccessToURL:fileURL block:^(NSError * error) {
+		if (!error)
+			success = [[NSFileManager defaultManager] trashItemAtURL:fileURL resultingItemURL:nil error:nil];
 	}];
-	return path;
-}
-
-/* The returned path looks like "{Path to library}/{Library name}.teaboxdb/Projects/{Project id} - {Project name}/{Step id} - {Step name}" */
-- (NSString *)pathForStepFolder:(Step *)step
-{
-	NSString * projectFolderPath = [[self pathForStepFolder:step] stringByDeletingLastPathComponent]; // !!!: Not bulletproof, what if `pathForStepFolder:` ends with filename?
-	
-	NSString * folderName = [NSString stringWithFormat:@"%li - %@", (long)step.identifier, step.name];
-	NSString * path = [NSString stringWithFormat:@"%@/%@", projectFolderPath, folderName];
-	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
-		if (!error) {
-			NSFileManager * manager = [[NSFileManager alloc] init];
-			if (![manager fileExistsAtPath:path]) {
-				NSDirectoryEnumerator * enumerator = [manager enumeratorAtURL:[NSURL fileURLWithPath:projectFolderPath]
-												   includingPropertiesForKeys:nil
-																	  options:(NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsPackageDescendants | NSDirectoryEnumerationSkipsSubdirectoryDescendants)
-																 errorHandler:NULL];
-				BOOL folderExists = NO;
-				int length = (int)ceil(log10(step.identifier));
-				for (NSURL * fileURL in enumerator) {
-					NSString * filename = fileURL.path.lastPathComponent;
-					if (filename.length > (length + 1)) {
-						int folderID = 0;
-						if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == step.identifier) {
-							/* Rename the folder with the new name */
-							[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
-							folderExists = YES;
-							break;
-						}
-					}
-				}
-				
-				if (!folderExists) {
-					[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
-				}
-			}
-		}
-	}];
-	return path;
-}
-
-/* The returned path looks like "{Path to library}/{Library name}.teaboxdb/Projects/{Project id} - {Project name}/{Step id} - {Step name}/{filename}.{extension}" */
-- (NSString *)pathForItem:(FileItem *)item
-{
-	return item.URL.path;
-	
-	NSURL * stepFolderURL = item.URL.URLByDeletingLastPathComponent;
-	NSURL * projectFolderURL = stepFolderURL.URLByDeletingLastPathComponent;
-	
-	if ([item.URL.baseURL.path isEqualToString:self.path]) { // Into the library
-		return [NSString stringWithFormat:@"%@/%@", [[item.URL.path stringByDeletingLastPathComponent] stringByDeletingLastPathComponent], item.filename];
-	} else {
-		NSString * const key = item.URL.absoluteString;
-		NSData * bookmarkData = [[NSUserDefaults standardUserDefaults] dataForKey:key];
-		
-		NSURLBookmarkResolutionOptions bookmarkOptions = 0;
-#if _SANDBOX_SUPPORTED_
-		bookmarkOptions = NSURLBookmarkResolutionWithSecurityScope;
-#endif
-		return [NSURL URLByResolvingBookmarkData:bookmarkData
-										 options:bookmarkOptions
-								   relativeToURL:nil // Use nil for app-scoped bookmark
-							 bookmarkDataIsStale:NULL
-										   error:NULL].path;
-	}
+	return success;
 }
 
 - (BOOL)reloadFromDisk
@@ -398,8 +300,146 @@ static NSMutableDictionary * _libraries = nil; // Note: Actually, only one libra
 	return success;
 }
 
+#pragma mark - Utilities
 
+- (nullable Project *)projectForStep:(Step *)step
+{
+	for (Project * aProject in self.projects) {
+		if ([aProject.steps containsObject:step])
+			return aProject;
+	}
+	return nil;
+}
 
+- (nullable NSURL *)URLForStep:(Step *)step
+{
+	Project * project = [self projectForStep:step];
+	if (!project)
+		return nil;
+	
+	NSURL * folderURL = [[self URLForProject:project] URLByAppendingPathComponent:step.name];
+	[SandboxHelper executeWithSecurityScopedAccessToURL:folderURL block:^(NSError * error) {
+		if (!error) {
+			NSFileManager * manager = [NSFileManager defaultManager];
+			if (![manager fileExistsAtPath:folderURL.path])
+				[manager createDirectoryAtPath:folderURL.path withIntermediateDirectories:YES attributes:nil error:nil];
+		}
+	}];
+	return folderURL;
+}
+
+- (BOOL)moveStepToTrash:(Step *)step
+{
+	NSURL * const fileURL = [self URLForStep:step];
+	__block BOOL success = NO;
+	[SandboxHelper executeWithSecurityScopedAccessToURL:fileURL block:^(NSError * error) {
+		if (!error)
+			success = [[NSFileManager defaultManager] trashItemAtURL:fileURL resultingItemURL:nil error:nil];
+	}];
+	return success;
+}
+
+- (nullable Step *)stepForItem:(Item *)item
+{
+	for (Project * project in self.projects) {
+		for (Step * step in project.steps) {
+			if ([step.items containsObject:item])
+				return step;
+		}
+	}
+	return nil;
+}
+
+- (nullable NSURL *)URLForFileItem:(FileItem *)item
+{
+	Step * const step = [self stepForItem:item];
+	if (step)
+		return [[self URLForStep:step] URLByAppendingPathComponent:item.URL.relativePath];
+	
+	return nil;
+}
+
+- (BOOL)moveFileItemToTrash:(FileItem *)item
+{
+	return [self moveFileItemToTrash:item exists:nil];
+}
+
+- (BOOL)moveFileItemToTrash:(FileItem *)item exists:(nullable BOOL *)exists
+{
+	NSURL * const fileURL = [self URLForFileItem:item];
+	__block BOOL success = NO;
+	[SandboxHelper executeWithSecurityScopedAccessToURL:fileURL block:^(NSError * error) {
+		if (!error) {
+			if (exists) *exists = [[NSFileManager defaultManager] fileExistsAtPath:fileURL.path];
+			
+			success = [[NSFileManager defaultManager] trashItemAtURL:fileURL resultingItemURL:nil error:nil];
+		}
+	}];
+	return success;
+}
+
+#pragma mark - Deprecated
+
+/* The returned path looks like "{Path to library}/{Library name}.teaboxdb/Projects/{Project id} - {Project name}" */
+- (NSString *)pathForProjectFolder:(Project *)project // DEPRECATED
+{
+	NSString * parentFolderPath = [NSString stringWithFormat:@"%@/Projects", self.path];
+	__block NSString * folderName = [NSString stringWithFormat:@"%li - %@", (long)project.identifier, project.name];
+	NSString * path = [NSString stringWithFormat:@"%@/%@", parentFolderPath, folderName];
+	
+	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+		if (!error) {
+			NSFileManager * manager = [NSFileManager defaultManager];
+			if (![manager fileExistsAtPath:path]) {
+				folderName = nil;
+				NSDirectoryEnumerationOptions options = (NSDirectoryEnumerationSkipsHiddenFiles |
+														 NSDirectoryEnumerationSkipsPackageDescendants |
+														 NSDirectoryEnumerationSkipsSubdirectoryDescendants);
+				NSDirectoryEnumerator * enumerator = [manager enumeratorAtURL:[NSURL fileURLWithPath:parentFolderPath]
+												   includingPropertiesForKeys:nil options:options errorHandler:NULL];
+				BOOL folderExists = NO;
+				int length = (int)ceil(log10(project.identifier));
+				for (NSURL * fileURL in enumerator) {
+					NSString * filename = fileURL.path.lastPathComponent;
+					if (filename.length > (length + 1)) {
+						int folderID = 0;
+						if ([[NSScanner scannerWithString:[filename substringToIndex:(length + 1)]] scanInt:&folderID] && folderID == project.identifier) {
+							// Rename the folder with the new name
+							[manager moveItemAtPath:fileURL.path toPath:path error:NULL];
+							folderExists = YES;
+							break;
+						}
+					}
+				}
+				
+				if (!folderExists) {
+					[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
+				}
+			}
+		}
+	}];
+	return path;
+}
+
+- (NSString *)pathForStepFolder:(Step *)step // DEPRECATED
+{
+	return [self URLForStep:step].path;
+	
+	Project * project = [self projectForStep:step];
+	if (!project)
+		return nil;
+	
+	NSString * projectFolderPath = [self URLForProject:project].path;
+	NSString * path = [NSString stringWithFormat:@"%@/%@", projectFolderPath, step.name];
+	[SandboxHelper executeWithSecurityScopedAccessToPath:path block:^(NSError * error) {
+		if (!error) {
+			NSFileManager * manager = [NSFileManager defaultManager];
+			if (![manager fileExistsAtPath:path])
+				[manager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
+		}
+	}];
+	return path;
+}
 
 #pragma mark - Deprecated (migration only)
 
@@ -531,11 +571,6 @@ sqlite3 * init_db(const char path[])
 - (void)close
 {
 	sqlite3_close(self.database);
-}
-
-- (NSURL *)URLForItem:(Item *)item
-{
-	return [NSURL fileURLWithPath:[self pathForItem:item]];
 }
 
 @end

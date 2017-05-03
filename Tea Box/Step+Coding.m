@@ -51,8 +51,10 @@
 								 usingBlock:^(NSTextCheckingResult * _Nullable result, NSMatchingFlags flags, BOOL * stop) {
 									 NSString * itemRepresentation = [representation substringWithRange:result.range];
 									 Item * item = nil;
-									 if ([itemRepresentation matchesPattern:@"^- \\[.+\\]\\(.+\\)$"]) // File item "- [name](path)"
-										 item = [[Item alloc] initWithRepresentation:itemRepresentation];
+									 if /**/ ([itemRepresentation matchesPattern:@"^- \\[.+\\]\\(https?:.+\\)$"]) // Web item "- [{{name}}]({{url}})"
+										 item = [[WebURLItem alloc] initWithRepresentation:itemRepresentation];
+									 else if ([itemRepresentation matchesPattern:@"^- \\[.+\\]\\(.+\\)$"]) // File item "- [name](path)"
+										 item = [[FileItem alloc] initWithRepresentation:itemRepresentation];
 									 else if ([itemRepresentation matchesPattern:@"^- \\[( |x)\\] .+$"]) // Task "- [ |x] name"
 										 item = [[TaskItem alloc] initWithRepresentation:itemRepresentation];
 									 else if ([itemRepresentation matchesPattern:@"^- \\[\\d+\\/\\d+\\] .+$"]) // Countdown "- [5/10] name"

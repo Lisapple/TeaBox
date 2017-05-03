@@ -33,8 +33,7 @@
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
-	if (!nibNameOrNil) nibNameOrNil = @"MainViewController";
-	if (!nibBundleOrNil) nibBundleOrNil = [NSBundle mainBundle];
+	nibNameOrNil = nibNameOrNil ?: @"MainViewController";
 	if ((self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil])) { }
 	return self;
 }
@@ -52,7 +51,7 @@
 	
 	[super loadView];
 	
-	_navigationBar.title = self.library.name ?: @"Tea Box";
+	_navigationBar.title = NSLocalizedString(self.library.name, nil) ?: @"Tea Box";
 	
 	self.tableView.delegate = self;
 	self.tableView.dataSource = self;
@@ -197,7 +196,7 @@
 {
 	BOOL success = YES;
 	if (!keep)
-		success = [aProjet moveToTrash];
+		success = [_library moveProjectToTrash:aProjet];
 	
 	if (success)
 		[aProjet delete];
@@ -215,6 +214,7 @@
 - (void)navigationControllerWillPopViewController:(NSViewController *)viewController animated:(BOOL)animated
 {
 	[self reloadData];
+	[self.library save];
 }
 
 #pragma mark - TableView DataSource

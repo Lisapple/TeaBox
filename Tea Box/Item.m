@@ -14,10 +14,6 @@
 @implementation Item
 @end
 
-
-NSUInteger const FileItemTypeTask = 1001;
-NSUInteger const FileItemTypeCountdown = 1002;
-
 FileItemType FileItemTypeFromString(NSString * typeString) {
 	if ([typeString isEqualToString:kItemTypeImage])
 		return FileItemTypeImage;
@@ -68,18 +64,30 @@ extern NSImage * SelectedImageForFileItemType(FileItemType type)
 	if ((self = [super init])) {
 		_itemType = type;
 		_URL = URL;
+		_name = URL.lastPathComponent;
 	}
 	return self;
 }
 
 - (BOOL)isLinked
 {
-	return ![self.URL.baseURL.path isEqualToString:[TBLibrary defaultLibrary].path]; // @TODO: Should not use arbitrary `defaultLibrary`
+	return [self isLinkedInto:[TBLibrary defaultLibrary]];
+}
+
+- (BOOL)isLinkedInto:(TBLibrary *)library
+{
+	return ![[library URLForFileItem:self].baseURL.path isEqualToString:library.path]; // @TODO: Should not use arbitrary `defaultLibrary`
 }
 
 - (BOOL)removeFromDisk
 {
-	
+	__block BOOL success = NO;
+	[SandboxHelper executeWithSecurityScopedAccessToURL:self.URL block:^(NSError * _Nullable error) { // @FIXME: Should not be `URL` but `-[TBLibrary URLForFileItem:]`
+		if (!error) {
+			success = [[NSFileManager defaultManager] removeItemAtURL:self.URL error:nil]; // @FIXME: Should not be `URL` but `-[TBLibrary URLForFileItem:]`
+		}
+	}];
+	return success;
 }
 
 
@@ -154,29 +162,6 @@ NSString * const kItemTypeUnkown = @"????";
 	return self;
 }
 
-- (BOOL)moveToStep:(Step *)destinationStep
-{
-	__block BOOL moved = NO;
-	if (self.filename) { // Copied or moved item, move it to new step folder
-		
-		NSAssert(_step.project.identifier == destinationStep.project.identifier, @"source and destination steps must be from same project");
-		
-		NSString * path = [NSString stringWithFormat:@"%@/%@", [self.library pathForStepFolder:_step], self.filename];
-		NSString * newPath = [NSString stringWithFormat:@"%@/%@", [self.library pathForStepFolder:destinationStep], self.filename];
-		
-		[SandboxHelper executeWithSecurityScopedAccessToProject:_step.project block:^(NSError * error) {
-			moved = [[NSFileManager defaultManager] moveItemAtPath:path toPath:newPath error:NULL];
-			if (!moved) return ;
-			
-			[destinationStep addItem:self];
-			[_step removeItem:self];
-			
-			_step = destinationStep;
-		}];
-	}
-	return moved;
-}
-
 - (NSString *)description
 {
 	return [NSString stringWithFormat:@"<Item: 0x%x name=\"%@\", type=\"%@\" id=%li library=%@>", (unsigned int)self, _filename, _type, (long)_identifier, _library];
@@ -190,7 +175,20 @@ NSString * const kItemTypeUnkown = @"????";
 - (instancetype)initWithContent:(NSString *)content
 {
 	if ((self = [super init])) {
-		_content = content;
+		self.content = content;
+	}
+	return self;
+}
+
+@end
+
+
+@implementation WebURLItem
+
+- (instancetype)initWithURL:(NSURL *)url
+{
+	if ((self = [super init])) {
+		self.URL = url;
 	}
 	return self;
 }
@@ -208,18 +206,10 @@ NSString * const kItemTypeUnkown = @"????";
 	return self;
 }
 
-- (void)markAsActive
+- (TaskState)toggleState
 {
-	@synchronized (self) {
-		_completed = NO;
-	}
-}
-
-- (void)markAsCompleted
-{
-	@synchronized (self) {
-		_completed = YES;
-	}
+	self.state = (self.state + 1) % kTaskStateCount;
+	return self.state;
 }
 
 @end

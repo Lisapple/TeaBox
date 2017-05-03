@@ -30,13 +30,13 @@
 	[userDefaults setObject:dragOperation forKey:@"Default-Drag-Operation"];
 	[userDefaults synchronize];
 	
-	[self.parentWindow endSheet:self returnCode:NSModalResponseOK];
+	[self.sheetParent endSheet:self returnCode:NSModalResponseOK];
 	[self orderOut:nil];
 }
 
 - (IBAction)cancelAction:(id)sender
 {
-	[self.parentWindow endSheet:self returnCode:NSModalResponseCancel];
+	[self.sheetParent endSheet:self returnCode:NSModalResponseCancel];
 	[self orderOut:nil];
 }
 

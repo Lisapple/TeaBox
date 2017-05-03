@@ -13,6 +13,12 @@
 
 #import "NSAlert+additions.h"
 
+@interface ProjectViewController ()
+
+- (IBAction)newStepAction:(id)sender;
+
+@end
+
 @implementation AppDelegate
 
 + (AppDelegate *)app

@@ -14,9 +14,6 @@
 NSString * const StepDidUpdateNotification = @"StepDidUpdateNotificationName";
 
 @interface Step ()
-{
-	BOOL hasChanged;
-}
 
 @property (strong) NSMutableArray <Item *> * items;
 
@@ -30,6 +27,7 @@ NSString * const StepDidUpdateNotification = @"StepDidUpdateNotificationName";
 {
 	if ((self = [super init])) {
 		self.name = name;
+		self.path = name;
 		_items = [NSMutableArray arrayWithCapacity:5];
 	}
 	return self;
@@ -38,19 +36,19 @@ NSString * const StepDidUpdateNotification = @"StepDidUpdateNotificationName";
 - (void)addItem:(Item *)item
 {
 	[_items addObject:item];
-	// @TODO: Send StepDidUpdateNotification (with step as object)
+	[[NSNotificationCenter defaultCenter] postNotificationName:StepDidUpdateNotification object:self];
 }
 
 - (void)addItems:(NSArray <Item *> *)items
 {
 	[_items addObjectsFromArray:items];
-	// @TODO: Send StepDidUpdateNotification (with step as object)
+	[[NSNotificationCenter defaultCenter] postNotificationName:StepDidUpdateNotification object:self];
 }
 
 - (void)removeItem:(Item *)item
 {
 	[_items removeObject:item];
-	// @TODO: Send StepDidUpdateNotification (with step as object)
+	[[NSNotificationCenter defaultCenter] postNotificationName:StepDidUpdateNotification object:self];
 }
 
 - (BOOL)removeFromDisk
@@ -215,7 +213,8 @@ NSString * const StepDidUpdateNotification = @"StepDidUpdateNotificationName";
 
 - (NSString *)description
 {
-	return [NSString stringWithFormat:@"<Step: 0x%x name=\"%@\", description=\"%@\" id=%li library=%@>", (unsigned int)self, self.name, _description, (long)_identifier, _library];
+	return [NSString stringWithFormat:@"<Step: 0x%x name=\"%@\", description=\"%@\" id=%li library=%@>",
+			(unsigned int)self, self.name, _description, (long)_identifier, _library];
 }
 
 - (void)setIdentifier:(NSInteger)identifier

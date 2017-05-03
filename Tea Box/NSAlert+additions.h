@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 			   informativeText:(nullable NSString *)informativeText
 				  buttonTitles:(NSArray <NSString *> *)titles;
 
+- (NSArray <NSButton *> *)addButtonsWithTitles:(NSArray <NSString *> *)titles;
+
 @end
 
 NS_ASSUME_NONNULL_END
