@@ -8,6 +8,8 @@
 
 #import "NSInputStream+additions.h"
 
+const int MaxTransmissionUnit = 7981; // 7981 for WLAN, 1500 for Eternet
+
 @implementation NSInputStream (additions)
 
 - (NSString *)getUTF8String
@@ -19,18 +21,18 @@
 
 - (NSData *)getData
 {
-	NSMutableData * data = [NSMutableData dataWithCapacity:(kMaxTransmissionUnit * 4)];
+	NSMutableData * data = [NSMutableData dataWithCapacity:(MaxTransmissionUnit * 4)];
 	NSInteger actuallyRead = 0;
-	uint8_t buffer[kMaxTransmissionUnit];
+	uint8_t buffer[MaxTransmissionUnit];
 	do {
-		actuallyRead = (NSInteger)[self read:(uint8_t *)buffer maxLength:kMaxTransmissionUnit];
+		actuallyRead = (NSInteger)[self read:(uint8_t *)buffer maxLength:MaxTransmissionUnit];
 		
 		if (actuallyRead < 0)
 			return nil;
 		
 		NSData * dataRead = [[NSData alloc] initWithBytes:buffer length:actuallyRead];
 		[data appendData:dataRead];
-	} while (actuallyRead >= kMaxTransmissionUnit);
+	} while (actuallyRead >= MaxTransmissionUnit);
 	return data;
 }
 

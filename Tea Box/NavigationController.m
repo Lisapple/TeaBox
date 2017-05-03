@@ -36,8 +36,8 @@ static NSMutableArray <id <NavigationControllerDelegate>> * _delegates = nil;
 
 + (void)addDelegate:(id <NavigationControllerDelegate>)delegate
 {
-    if (![_delegates containsObject:delegate])
-        [_delegates addObject:delegate];
+	if (![_delegates containsObject:delegate])
+		[_delegates addObject:delegate];
 }
 
 + (void)removeDelegate:(id <NavigationControllerDelegate>)delegate

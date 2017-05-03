@@ -10,13 +10,4 @@
 
 @interface Step (additions)
 
-//- (BOOL)moveToPath:(NSString *)path moveItems:(BOOL)moveItems;
-- (BOOL)moveToTrash;
-
-//- (BOOL)moveAllItemsToPath:(NSString *)path;
-//- (BOOL)moveLinkedItemsToPath:(NSString *)path;
-
-//- (BOOL)moveAllItemsToTrash;
-//- (BOOL)moveLinkedItemsToTrash;
-
 @end

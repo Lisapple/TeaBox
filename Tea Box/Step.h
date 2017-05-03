@@ -42,8 +42,6 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Deprecated
 
-#import "TBLibrary.h"
-
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Step ()
@@ -61,7 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)update UNAVAILABLE_ATTRIBUTE;
 - (NSUInteger)itemsCount UNAVAILABLE_ATTRIBUTE;
 - (void)updateValue:(id)value forKey:(NSString *)key DEPRECATED_ATTRIBUTE;
-- (BOOL)delete DEPRECATED_ATTRIBUTE;
+- (BOOL)delete DEPRECATED_MSG_ATTRIBUTE("Use -[Project removeStep:] instead");
 
 @end
 

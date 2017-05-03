@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)executeWithSecurityScopedAccessToPath:(NSString *)path block:(void (^)(NSError * _Nullable))block;
 
 + (void)executeWithSecurityScopedAccessToProject:(Project *)project block:(void (^)(NSError * _Nullable))block;
-+ (void)executeWithSecurityScopedAccessToItem:(Item *)item block:(void (^)(NSError * _Nullable))block DEPRECATED_ATTRIBUTE;
++ (void)executeWithSecurityScopedAccessToItem:(Item *)item block:(void (^)(NSError * _Nullable))block UNAVAILABLE_ATTRIBUTE;
 
 + (void)executeWithSecurityScopedAccessFromBookmarkData:(nonnull NSData *)bookmarkData block:(void (^)(NSURL * _Nullable fileURL, NSError * _Nullable error))block;
 

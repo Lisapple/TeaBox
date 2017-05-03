@@ -16,18 +16,6 @@
 	return NO;
 }
 
-- (BOOL)moveToTrash
-{
-	__block BOOL moved = NO;
-	[SandboxHelper executeWithSecurityScopedAccessToURL:self.URL block:^(NSError * error) {
-		if (!error) {
-			NSFileManager * fileManager = [NSFileManager defaultManager];
-			moved = (BOOL)[fileManager trashItemAtURL:self.URL resultingItemURL:nil error:nil];
-		}
-	}];
-	return moved;
-}
-
 @end
 
 

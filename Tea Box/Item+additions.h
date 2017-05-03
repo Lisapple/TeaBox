@@ -12,8 +12,6 @@
 
 @interface FileItem (additions)
 
-- (BOOL)moveToTrash;
-
 @end
 
 

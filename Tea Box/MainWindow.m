@@ -12,16 +12,14 @@
 
 - (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
-    if ((self = [super initWithCoder:aDecoder])) {
-        // Initialization code here.
-		
+	if ((self = [super initWithCoder:aDecoder])) {
 		NSRect contentRect = self.frame;
 		subcontentView = [[NSView alloc] initWithFrame:contentRect];
 		subcontentView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
 		[self addSubview:subcontentView];
-    }
-    
-    return self;
+	}
+	
+	return self;
 }
 
 - (void)addView:(NSView *)aView

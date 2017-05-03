@@ -35,8 +35,8 @@
 								  NSDirectoryEnumerator * enumerator = [[NSFileManager defaultManager] enumeratorAtURL:_choosenURL
 																							includingPropertiesForKeys:nil
 																											   options:options
-																										  errorHandler:^ BOOL (NSURL * _Nonnull url, NSError * _Nonnull error) {
-																											  return YES; /* Continue on error */ }];
+																										  errorHandler:^
+																		BOOL (NSURL * url, NSError * error) { return YES; /*Continue on error*/ }];
 								  NSURL * fileURL = nil;
 								  while ((fileURL = enumerator.nextObject)) {
 									  if ([fileURL.pathExtension isEqualToString:@"teaboxdb"]) {
@@ -48,7 +48,10 @@
 							  }
 							  
 							  // Update |pathDescriptionLabel| with choosen path or with "Use XXX.teaboxdb"
-							  _pathDescriptionLabel.stringValue = (existingLibraryChoosen) ? [NSString stringWithFormat:@"Use %@", _choosenURL.lastPathComponent] : [NSString stringWithFormat:@"Creating at %@", _choosenURL.path];
+							  _pathDescriptionLabel.stringValue = (existingLibraryChoosen)
+								? [NSString stringWithFormat:@"Use %@", _choosenURL.lastPathComponent]
+								: [NSString stringWithFormat:@"Creating at %@", _choosenURL.path];
+							  
 							  [_skipOrDoneButton setTitle:@"Done"];
 						  }
 					  }];
@@ -56,17 +59,17 @@
 
 - (void)close
 {
-	if (self.completionHandler) {
+	if (self.completionHandler)
 		self.completionHandler(_choosenURL, (_choosenURL == nil));
-	}
+	
 	[super close];
 }
 
 - (IBAction)skipOrDoneAction:(id)sender
 {
-	if (self.completionHandler) {
+	if (self.completionHandler)
 		self.completionHandler(_choosenURL, (_choosenURL == nil));
-	}
+	
 	[self orderOut:nil];
 }
 

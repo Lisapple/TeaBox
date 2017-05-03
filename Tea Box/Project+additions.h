@@ -10,12 +10,4 @@
 
 @interface Project (additions)
 
-//- (BOOL)moveToPath:(NSString *)path moveSteps:(BOOL)moveSteps;
-- (BOOL)moveToTrash;
-
-//- (BOOL)moveAllStepsToPath:(NSString *)path;
-//- (BOOL)moveAllItemsToPath:(NSString *)path;
-
-//- (BOOL)moveAllStepsAndItemsToTrash;
-
 @end
